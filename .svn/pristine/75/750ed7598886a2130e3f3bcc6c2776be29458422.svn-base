@@ -1,0 +1,228 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Dashboard extends Base_Controller {
+
+	function __construct()
+	{
+		parent::__construct(); 	
+	}
+
+	function index()
+	{  
+    $data['title'] = lang('dashboard'); 
+    
+    $data['total_users'] = $this->Base_model->getTotalUsers();
+    $data['wallet_details'] = $this->Dashboard_model->getUserWalletDetails();
+    $data['refferal_amt'] = $this->Dashboard_model->getrefferalAmountTotal();
+    // $total_investment= $this->Dashboard_model->getTotalInvestAmount();
+    // $data['total_investment']=cur_format($total_investment);
+    // $data['payout_release']=$this->Dashboard_model->getUserPayoutAmount('','released');
+    // $data['payout_pending']=$this->Dashboard_model->getUserPayoutAmount('','pending');
+    // $months = $joinees = '';
+    // for($n=11;$n>=0;$n--)
+    // {
+
+    //   $month = date('m',strtotime(" - $n month"));
+    //   $year = date('Y',strtotime(" - $n month"));
+    //   $month_year[$n]['month_name'] = date('M',strtotime(" - $n month"));
+    //   $joinees.= "'".count($this->Dashboard_model->getMonthly_joiners($month,'','',$year))."',";
+    //   $months.="'".$month_year[$n]['month_name']."',";
+
+    // }
+
+    // $data['months']=$months;
+    // $data['joinees']=$joinees;
+
+    // $data['ranks']=$this->Dashboard_model->getRankUsersCount();
+    // $data['recent_joiners'] = $this->Dashboard_model->getRecentJoiners();
+    // $data['top_recruiters']=$this->Dashboard_model->getCountRecruiters();
+
+    // $this->load->model('Support_model');
+    // $data['ticket_count'] = $this->Support_model->getTicketCountByType();
+    // $resolved_id = $this->Support_model->getTicketStatusToid('Resolved');
+    // $data['resolved_count'] = $this->Support_model->getTicketCountByType('', 'status_id', $resolved_id);
+
+    // $data['total_sales_pending'] = $this->Dashboard_model->getTotalSales('','Pending',1);
+    // $data['total_sales'] = $this->Dashboard_model->getTotalSales('','Delivered',1);
+    // $data['total_products'] = $this->Dashboard_model->getTotalProducts();
+    // $data['total_category'] = $this->Dashboard_model->getTotalCategory();
+    // $data['total_sales_count'] = $this->Dashboard_model->getTotalSales();
+    // $data['total_orders'] = $this->Dashboard_model->getTotalSales('','','count');
+    $this->loadView($data);
+  }
+
+  public function getDashboardDatas()
+  {
+    if ($this->input->is_ajax_request() ) {
+      $this->load->model('Business_model');
+      $post = $this->input->post(); 
+      $response['total_users'] = $this->Base_model->getTotalUsers();
+      $total_investment= $this->Dashboard_model->getTotalInvestAmount();
+      $response['total_investment']=cur_format($total_investment);
+      $payout_release=$this->Dashboard_model->getUserPayoutAmount('','released');
+      $response['payout_release'] = cur_format($payout_release);
+      $response['curent_rank'] = $this->Dashboard_model->getCurrentRank(log_user_id());
+      $payout_pending=$this->Dashboard_model->getUserPayoutAmount('','pending');
+      $response['payout_pending'] = cur_format($payout_pending);
+      $wallet=$this->Business_model->getUserWalletSum('wallet',log_user_id());
+      $response['wallet'] = cur_format($wallet);
+      $wallet_details = $this->Dashboard_model->getUserWalletDetails(log_user_id()) ;
+      if($wallet_details['referral_bonus']>0||$wallet_details['wallet']>0||$wallet_details['level_bonus']>0||$wallet_details['wallet_withdrawal']>0)
+      {
+
+        $referral_per=round(($wallet_details['referral_bonus']/$wallet_details['wallet'])*100 ,2);
+        $response['referral_per'] = $referral_per;
+        $response['referral'] = cur_format($referral_per);
+        $level_bonus=round(($wallet_details['level_bonus']/$wallet_details['wallet'])*100 ,2);
+
+        $response['level_per'] =cur_format($level_bonus);
+        $response['level_bar'] =$level_bonus;
+
+        $withdrawal_per=round(($wallet_details['wallet_withdrawal']/$wallet_details['wallet'])*100,2);
+        $response['withdrawal_per'] = cur_format($withdrawal_per);
+        $response['withdrawal']=$withdrawal_per;
+        
+      }
+      $response['wallet_details'] = $this->Dashboard_model->getUserWalletDetails(log_user_id()) ;
+      $response['recent_joiners'] = $this->Dashboard_model->getRecentJoiners();
+      for($m=30; $m>=0; $m--)
+      {
+
+        $echart_referral[] =  $this->Dashboard_model->echartValues($m,'referral_bonus');
+        $echart_level[] =  $this->Dashboard_model->echartValues($m,'level_bonus');
+        $echart_rank[] =  $this->Dashboard_model->echartValues($m,'rank_bonus');
+        $echart_matrix[] =  $this->Dashboard_model->echartValues($m,'matrix_bonus');
+
+      }
+
+      $response['sum_ref']=array_sum($echart_referral);
+      $response['sum_lev']=array_sum($echart_level);
+      $response['sum_rank']=array_sum($echart_rank);
+      $response['sum_matrix']=array_sum($echart_matrix);
+      if ($response) {
+        $response['success'] = TRUE;
+        
+        $this->output
+        ->set_status_header(200)
+        ->set_content_type('application/json', 'utf-8')
+        ->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+        ->_display();
+        exit();
+
+      }
+      else{
+        $response['success'] = FALSE;
+        $response['msg'] = 'Failed..! Please check the inputs';
+        $this->set_session_flash_data( $response['msg'], $response['success']  );
+        $this->output
+        ->set_status_header(200)
+        ->set_content_type('application/json', 'utf-8')
+        ->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+        ->_display();
+        exit();
+
+      }
+    }
+
+  }
+
+
+
+  public function getMonthYear()
+  {
+    if ($this->input->is_ajax_request()) {
+
+      $month_year = array();
+      $month_names = array();
+
+      for($n=0;$n<12;$n++)
+      {
+        $month_year[$n]['value']=$n;
+
+        $month_year[$n]['month']= date('m',strtotime(" - $n month"));
+        $month_year[$n]['month_name']= date('M',strtotime(" - $n month"));
+        $month_year[$n]['year']= date('Y',strtotime(" - $n month"));
+        $month_year[$n]['date']= date('Y-m-d',strtotime(" - $n month"));
+        $month_name =$month_year[$n]['month_name'].' '.$month_year[$n]['year'];
+        $value[] = $n;
+        $data[] = [ 'id' => $n , 'text' => $month_name];
+
+
+      }
+
+      echo json_encode($data);
+
+    }
+
+  }
+
+  public function getMonthName()
+  {
+    if ($this->input->is_ajax_request()) {
+
+      $month_year = array();
+      $month_names = array();
+
+      for($n=0;$n<12;$n++)
+      {
+        $month_year[$n]['value']=$n;
+
+        $month_year[$n]['month']= date('m',strtotime(" - $n month"));
+        $month_year[$n]['month_name']= date('M',strtotime(" - $n month"));
+        $month_year[$n]['year']= date('Y',strtotime(" - $n month"));
+        $month_year[$n]['date']= date('Y-m-d',strtotime(" - $n month"));
+        $month_name[] =$month_year[$n]['month_name'];
+        $value[] = $n;
+        $data[]=$month_name;
+
+      }
+
+      $response['names']=$data;
+      $day_limit = ['01','04','08','12','16','20','24','28','31'];
+      $i=0; 
+      $j=0;
+
+      foreach($month_year as $v)
+      {
+        for($j=0;$j<8;$j++)
+        {
+
+          $start_day=  $day_limit[$j];
+          $end_day = $day_limit[$j+1];
+          $month =  $month_year[$i]['month'];
+          $year =  $month_year[$i]['year'];
+          $datas[$i]=$this->Dashboard_model->getMonthly_joiners($month,$start_day,$end_day,$year);
+          $monthly_joiners[$i][]=count($datas[$i]);
+
+        }
+
+
+        $i++; 
+      }
+
+      for($i=0,$j=1; $i<=11; $i++,$j++)
+      {
+        $response['m'.$j] = $monthly_joiners[$i];
+      }
+
+      echo json_encode($response);
+    }
+
+  }
+
+  public function getTime() {
+    $site_details = $this->Base_model->getCompanyInformation();
+    $timezone = $site_details["time_zone"];
+    date_default_timezone_set($timezone); 
+    $server_time = date('Y-m-d H:i:s A');
+    $response = array(
+      'server_time' => $server_time
+    );
+    $this->output
+    ->set_content_type('application/json')
+    ->set_output(json_encode($response));
+  }
+
+
+}
+

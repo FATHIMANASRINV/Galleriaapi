@@ -1,0 +1,84 @@
+{extends file="layout/base.tpl"}
+
+{block name="head"}
+
+<link href="{assets_url('plugins/autocomplete/jquery-ui.min.css')}" rel="stylesheet" />
+<link href="{assets_url('plugins/autocomplete/style.css')}" rel="stylesheet" />
+
+{/block}
+
+{block name="body"}
+
+<div class="row "> 
+	<div class="col-sm-12"> 
+		<div class="card"> 
+
+<div class="card-header">
+				<h5>Blocked user list </h5>
+			</div>
+
+			<div class="card-content">
+				<div class="card-body">  
+					<div class="d-flex align-items-end pull-right "> 
+						
+
+						<a href="#" onclick="javascript:window.print();"  class="btn btn-social-icon btn-block btn-sm mb-1 btn-github hidden-print"  ><i class="fa fa-print"></i></a>
+					</div>
+					<div class="table-responsive">
+						<table class="table color-table primary-table" id="exportTable">
+							<thead >
+								<tr>
+									<th>#</th>
+									<th>User Name</th>
+									<th>Full Name</th> 
+									<th>Date</th> 
+									<th>Reason</th>   
+									
+								</tr>
+							</thead>
+							<tbody>
+								{foreach from=$details item=v}
+								<tr>
+									<td>{counter}</td> 
+									<td>{$v.user_name}</td>
+									<td>{$v.first_name}</td> 
+									<td>{$v.date}</td> 
+								  <td>{$v.reason}</td>  
+									
+									
+								</tr> 
+								{/foreach}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div> 
+	</div> 
+</div> 
+
+
+{/block}
+
+{block name="footer"}
+
+<script src="{assets_url('plugins/autocomplete/filter.js')}"></script>
+<script src="{assets_url('plugins/autocomplete/jquery-ui.min.js')}"></script></script>
+
+{* <script type="text/javascript">
+	$(document).ready(function(){
+		$('#user_name').on('blur', function(){
+			var user_name= $(this).val();
+
+			$.post( "{base_url()}admin/settings/get_user_sponsor_name", { user_name: user_name })
+			.done(function( data ) {
+				$('#sponsor_name').val(data);
+             	$('#sponsor_name_div').show();
+
+			});
+
+		});
+	});
+</script> *}
+
+{/block}

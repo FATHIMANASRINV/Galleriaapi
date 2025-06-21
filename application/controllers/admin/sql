@@ -1,0 +1,16 @@
+DROP TABLE ` countries
+DROP TABLE ` state
+DROP TABLE `amount_transfer_details`, `crypto_request_history`, `employee_menus`, `fund_transfer`, `geo_locations`, `matrix_bonus`, `missed_global_reserved`, `rank_bonus`, `rank_details`, `rank_history`, `transaction_id`;
+DROP TABLE `internal_mail`, `payout_fund`, `payout_requests`, `privileged_user_info`;
+
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 3;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 4;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 6;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 7;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 8;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 9;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 10;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 11;
+DELETE FROM `amount_type` WHERE `amount_type`.`id` = 12;
+
+DROP TABLE `added_images`, `add_deduct_fund`, `mail_details`, `tools`;

@@ -1,0 +1,279 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+{/block}
+{block name="body"} 
+                <!-- Start::row-1 -->
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="card">
+                            <div class="card-body h-100">
+                                <div class="row ">
+                                    <div class=" col-xl-5 col-lg-12 col-md-12">
+                                        <div class="product-carousel  border br-5">
+                                            <div id="Slider" class="carousel slide" data-bs-ride="false">
+                                                <div class="carousel-inner py-3">
+                                                    <div class="carousel-item active"><img
+                                                            src="{assets_url()}images/products/{$product_details['image']}" alt="img"
+                                                            class="img-fluid mx-auto d-block">
+                                                    </div>
+                                                    {foreach $product_details['product_images'] as $v}
+                                                    <div class="carousel-item"> <img
+                                                            src="{assets_url()}images/products/{$v.image}" alt="img"
+                                                            class="img-fluid mx-auto d-block">
+                                                    </div>
+                                                    {/foreach}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="clearfix carousel-slider">
+                                            <div id="thumbcarousel" class="carousel slide mt-2" data-bs-interval="t">
+                                                <div class="carousel-inner">
+                                                    <ul class="carousel-item active d-flex justify-content-center list-unstyled nav mt-2">
+                                                        <li data-bs-target="#Slider" data-bs-slide-to="0"
+                                                            class="thumb wd-18 active my-2"><img
+                                                                src="{assets_url()}images/products/{$product_details['image']}"
+                                                                alt="img"></li>
+                                                                {$i=1}
+                                                        {foreach $product_details['product_images'] as $v}
+                                                        <li data-bs-target="#Slider" data-bs-slide-to="{$i}"
+                                                            class="thumb wd-18 my-2"><img
+                                                                src="{assets_url()}images/products/{$v.image}"
+                                                                alt="img"></li>
+                                                                <span style="display:none;">{$i++}</span>
+                                                        {/foreach}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="details col-xl-7 col-lg-12 col-md-12 mt-4 mt-xl-0">
+                                        <h5 class="product-title mb-1">{$product_details['product_name']}</h5>
+                                        <p class="text-muted fs-13 mb-1">{$product_details['description']}</p>
+                                        <div class="rating mb-1">
+                                            <div class="stars">
+                                                {if !$product_details['rating']}
+                                                    <span class="bx bxs-star fs-17 align-center text-muted"></span>
+                                                {/if}
+
+                                                {if $product_details['rating']}
+                                                {$total=100 * ($product_details['rating'] / 5)}
+                                                    <span class="bx bxs-star fs-17 align-center checked"></span>
+                                                {/if}
+                                            </div>
+                                            {if !$product_details['rating']}
+                                                <span class="review-no">41 reviews</span>
+                                                <!-- <a href="#" class="rating-link">( 4 {lang('Reviews')} )</a> -->
+                                            {else}
+                                                <a href="#" class="rating-link">( {$product_details['total_person_rated']} {lang('Reviews')} )</a>
+
+                                            {/if}
+                                            
+                                        </div>
+                                        <h6 class="price fs-14">current price: <span class="h4 ms-2 d-inline-block">{cur_format($product_details['price'])}</span></h6>
+                                        <p class="product-description">Suspendisse quos? Tempus cras iure temporibus? Eu
+                                            laudantium cubilia sem sem! Repudiandae et! Massa senectus enim minim
+                                            sociosqu delectus posuere.</p>
+                                        <p class="vote"><strong>91%</strong> of buyers enjoyed this product! <strong>(87
+                                                votes)</strong></p>
+
+                                        {form_open("",'')}
+                                        <div class="sizes d-flex">sizes:
+                                            {foreach $product_details['dimension_ids'] as $v}
+                                            <span class="size d-flex" data-bs-toggle="tooltip" title="{$v['name']}"><label
+                                                    class="rdiobox mb-0"><input  class="form-check-input" checked="" name="dimension" type="radio" id="dimension" value="{$v['id']}">
+                                                    <span class="fw-bold">{$v['name']}</span></label></span>
+                                            {/foreach}
+                                        </div>
+                                        <div class="d-flex  mt-2">
+                                            <div class="mt-2 product-title">Quantity:</div>
+                                            <div class="d-flex ms-2">
+                                                <div class="form-group text-center product-quantity-container">
+                                                    <div class="handle-counter input-group rounded flex-nowrap">
+                                                        <span class="btn btn-icon btn-light input-group-text product-quantity-minus" ><i class="ri-subtract-line"></i></span>
+                                                        <input type="text" class="form-control form-control-sm text-center" aria-label="quantity" id="product-quantity1" value="1">
+                                                        <span class="btn btn-icon btn-light input-group-text product-quantity-plus" ><i class="ri-add-line"></i></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="colors d-flex mt-3 align-items-center">
+                                            <span class="mt-2">colors:</span>
+                                            <div class="d-flex ms-4">
+                                                {foreach $product_details['color_ids'] as $v}
+												<div class="me-2">
+													<label class="colorinput">
+														<input name="color" type="radio" value="{$v.id}"
+															class="colorinput-input" checked="" id="color">
+														<span class="colorinput-color" value="{$v.color_code}" style="background-color:{$v.color_code} ;"></span>
+													</label>
+												</div>
+                                                 {/foreach}
+											</div>
+                                        </div>
+                                        <div class="action mt-4">
+                                            <a class="add-to-whishlist btn btn-danger my-1 me-1" data-productID="{$product_details['enc_product_id']}">ADD TO
+                                            WISHLIST</a>
+                                            <a class="add-to-cart btn btn-success" data-productID="{$product_details['enc_product_id']}">ADD TO
+                                            CART</a>
+                                        </div>
+                                        {form_close()}
+                                    </div>
+                                  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--End::row-1 -->
+
+                <!-- Start::row-2 -->
+                {*<div class="row related-products-ltr-l">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card item-card">
+                            <div class="card-body pb-0 h-100">
+                                <div class="text-center">
+                                    <img src="../assets/images/ecommerce/01.jpg" alt="img" class="img-fluid w-100 rounded-3">
+                                </div>
+                                <div class="card-body relative product-des">
+                                    <div class="cardtitle">
+                                        <span>Items</span>
+                                        <a>Sport shoes</a>
+                                    </div>
+                                    <div class="cardprice">
+                                        <span class="type--strikethrough">$999</span>
+                                        <span>$799</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center border-top py-3 px-2 ">
+                                <a href="products.html" class="btn btn-primary my-1"><i class="fe fe-eye me-1"></i> View More</a>
+                                <a href="product-cart.html" class="btn btn-success"><i class="fe fe-shopping-cart me-1"></i> Add to cart</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card item-card">
+                            <div class="card-body pb-0 h-100">
+                                <div class="text-center">
+                                    <img src="../assets/images/ecommerce/04.jpg" alt="img" class="img-fluid w-100 rounded-3">
+                                </div>
+                                <div class="card-body relative product-des">
+                                    <div class="cardtitle">
+                                        <span>Fashion</span>
+                                        <a>Mens Shoes</a>
+                                    </div>
+                                    <div class="cardprice">
+                                        <span class="type--strikethrough">$999</span>
+                                        <span>$799</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center border-top py-3 px-2 ">
+                                <a href="products.html" class="btn btn-primary my-1"><i class="fe fe-eye me-1"></i> View More</a>
+                                <a href="product-cart.html" class="btn btn-success"><i class="fe fe-shopping-cart me-1"></i> Add to cart</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card item-card">
+                            <div class="card-body pb-0 h-100">
+                                <div class="text-center">
+                                    <img src="../assets/images/ecommerce/07.jpg" alt="img" class="img-fluid w-100 rounded-3">
+                                </div>
+                                <div class="card-body relative product-des">
+                                    <div class="cardtitle">
+                                        <span>Accessories</span>
+                                        <a>Metal Watch</a>
+                                    </div>
+                                    <div class="cardprice">
+                                        <span class="type--strikethrough">$999</span>
+                                        <span>$799</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center border-top py-3 px-2 ">
+                                <a href="products.html" class="btn btn-primary my-1"><i class="fe fe-eye me-1"></i> View More</a>
+                                <a href="product-cart.html" class="btn btn-success"><i class="fe fe-shopping-cart me-1"></i> Add to cart</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card item-card">
+                            <div class="card-body pb-0 h-100">
+                                <div class="text-center">
+                                    <img src="../assets/images/ecommerce/08.jpg" alt="img" class="img-fluid w-100 rounded-3">
+                                </div>
+                                <div class="card-body relative product-des">
+                                    <div class="cardtitle">
+                                        <span>Accessories</span>
+                                        <a>Metal Watch</a>
+                                    </div>
+                                    <div class="cardprice">
+                                        <span class="type--strikethrough">$999</span>
+                                        <span>$799</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center border-top py-3 px-2 ">
+                                <a href="products.html" class="btn btn-primary my-1"><i class="fe fe-eye me-1"></i> View More</a>
+                                <a href="product-cart.html" class="btn btn-success"><i class="fe fe-shopping-cart me-1"></i> Add to cart</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>*}
+                <!--End::row-2 -->
+
+                <!-- Start::row-3 -->
+                <div class="row">
+                    <div class="col-md-12 col-xl-4 col-xs-12 col-sm-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="feature2">
+                                    <i
+                                        class="mdi mdi-airplane-takeoff bg-purple ht-50 wd-50 text-center rounded-circle text-fixed-white"></i>
+                                </div>
+                                <h5 class="mb-2 fs-16">Free Shipping</h5>
+                                <span class="fs-14 text-muted">Lorem ipsum dolor sit amet, consectetur adipisicing elit,
+                                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua domenus
+                                    orioneu.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 col-xl-4 col-xs-12 col-sm-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="feature2">
+                                    <i class="mdi mdi-headset bg-pink  ht-50 wd-50 text-center rounded-circle text-fixed-white"></i>
+                                </div>
+                                <h5 class="mb-2 fs-16">Customer Support</h5>
+                                <span class="fs-14 text-muted">Lorem ipsum dolor sit amet, consectetur adipisicing elit,
+                                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua domenus
+                                    orioneu.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 col-xl-4 col-xs-12 col-sm-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="feature2">
+                                    <i class="mdi mdi-refresh bg-teal ht-50 wd-50 text-center rounded-circle text-fixed-white"></i>
+                                </div>
+                                <div class="icon-return"></div>
+                                <h5 class="mb-2  fs-16">30 days money back</h5>
+                                <span class="fs-14 text-muted">Lorem ipsum dolor sit amet, consectetur adipisicing elit,
+                                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua domenus
+                                    orioneu.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--End::row-3 -->
+
+            </div>
+        </div>
+ 
+{/block}
+{block name="footer"}
+{/block}

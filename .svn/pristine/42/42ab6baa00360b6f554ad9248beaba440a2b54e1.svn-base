@@ -1,0 +1,426 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+<link href="{assets_url()}plugins/DataTables/datatables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/DataTables/DataTables-1.12.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/select2/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/fileupload/bootstrap-fileupload.min.css')}">
+{/block}
+{block name="body"} 
+<div class="modal fade bd-example-modal-lg" id="modal-product-add" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myLargeModalLabel">{lang('Add_Category')}</h4>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            {form_open_multipart('','id="add-form" class="needs-validation" novalidate=""')}
+            <div class="modal-body">
+
+                <input type="hidden" name="submit" value="add">
+                
+                <div class="form-group mb-3">
+                    <div class="col-sm-12">
+                        <input class="form-control category_name" type="text" name="category_name" placeholder="{lang('Category_Name')}" required autocomplete="off">
+                        <div class="invalid-feedback">
+                            {lang('field_required')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <div class="col-sm-12">
+                     <input class="form-check-input" id="gridCheck" type="checkbox"  name="sub_category" >
+                     <label class="form-check-label" for="gridCheck">{lang('Sub_category')}</label>
+                 </div>
+             </div>
+             <div class="form-group mb-3 cat" style="display: none;">
+                 <div class="col-sm-12">
+                   <select class="category_async col-sm-12"  name="category"  ></select> 
+               </div>
+           </div> 
+           <div class="form-group mb-3">
+            <div class="col-sm-12">
+              <textarea class="form-control "  name="description" placeholder="{lang('Description')}"  id="validationTextarea"
+              placeholder="Required example textarea" required=""></textarea>
+              <div class="invalid-feedback">
+                {lang('field_required')}
+            </div>
+        </div>
+    </div>
+    <div class="form-group mb-3">
+        <div class="col-sm-12">
+            <input class="form-control main_item_code" type="text" placeholder="{lang('Main_Item_Code')}" name="main_item_code" id="main_item_code" required autocomplete="off">
+            <div class="invalid-feedback">
+                {lang('field_required')}
+            </div>
+        </div>
+    </div>
+    <div class="form-group mb-3">
+        <div class="col-sm-12">
+            <input class="form-control sort_order" type="number" placeholder="{lang('Sort_Order')}" name="sort_order" id="sort_order" required autocomplete="off">
+            <div class="invalid-feedback">
+                {lang('field_required')}
+            </div>
+        </div>
+    </div>
+    <div class="form-group mb-3">
+        <div class="col-sm-12">
+            <input class="form-control" type="file" name="userfile" id="userfile" autocomplete="off">
+        </div>
+    </div>
+</div>
+<div class="modal-footer"> 
+    <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+    <button class="btn btn-primary btn-air-primary add-category" type="submit" name="add" value="Submit" >{lang('Add_Category')}</button>
+</div>
+{form_close()}         
+</div>
+</div>
+</div>
+<div class="modal fade bd-example-modal-lg" id="modal-product-edit" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card">
+         {*    <div class="card-header d-flex">
+                <h5 class="mb-0">{lang('Category_Details')}</h5>
+
+                 <div class="justify-content-right" align="right">
+
+                    <button  align="right" class="btn btn-outline-primary btn-pill btn-air-primary" type="button" data-bs-toggle="modal" data-bs-target="#modal-product-add">+ {lang('Add_Category')}</button>
+
+                </div>
+            </div> *}
+
+            <div class="card-header">
+                <h5 class="mb-0">{lang('Category_Details')}</h5>
+                <div class="justify-content-right" align="right">
+                    <button align="right" class="btn btn-outline-primary btn-pill btn-air-primary" type="button" data-bs-toggle="modal" data-bs-target="#modal-product-add">+ {lang('Add_Category')}</button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive product-table">
+                    <table class="table display" id="exportTable">
+                        <thead class="bg-light-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>{lang('image')}</th>
+                                <th>{lang('Category_Name')}</th>
+                                <th>{lang('Main_Item_Code')}</th>
+                                <th>{lang('Sort_Order')}</th>
+                                <th>{lang('text_date')}</th>
+                                <th>{lang('text_actions')}</th>
+                            </tr>
+                        </thead>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="footer"} 
+
+<script src="{assets_url()}plugins/DataTables/datatables.min.js"></script>
+<script src="{assets_url('plugins/DataTables/media/js/jquery.dataTables.min.js')}"></script>
+<script src="{assets_url()}plugins/select2/select2.min.js"></script>
+<script  src="{assets_url('theme/js/editor/ckeditor/ckeditor.js')}"></script>  
+<script  src="{assets_url('theme/js/editor/ckeditor/adapters/jquery.js')}"></script>  
+<script  src="{assets_url('theme/js/editor/ckeditor/styles.js')}"></script>  
+<script  src="{assets_url('js/bootstrap.js')}"></script>  
+<script  src="{assets_url('theme/js/ckeditor.js')}"></script> 
+<script  src="{assets_url('theme/js/select2/select2.full.min.js')}"></script>  
+<script src="{assets_url('plugins/fileupload/bootstrap-fileupload.min.js')}"></script>
+<script type="text/javascript">
+    $(document).on("submit", "#add-form", function(event)
+    {
+        var form = $(this)
+        event.preventDefault();
+        $.ajax({
+            url: "{base_url()}admin/inventory/save-category",
+            type: $(this).attr("method"),
+            dataType: "JSON",
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            beforeSend: function(){
+                $("#add-form .errorMsg").slideUp(500).remove();
+                $("#add-form .fieldErrorMsg").slideUp(500).remove();
+                $("#add-form .help-block").slideUp(500).remove();
+
+            },
+            success: function (response, status)
+            {
+                if(response.success){
+                    var errorElement = '<div class="alert alert-success outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-check"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    form.find('.modal-body').prepend( errorElement );
+                    $("#add-form .errorMsg").fadeTo(2000, 500).slideUp(500, function() {
+                        $("#add-form .errorMsg").slideUp(500)
+                    });
+                    form.removeClass("was-validated");
+                    detailed_table.ajax.reload(null, false );
+                    form.trigger("reset");
+                    setTimeout(function(){
+                        $('#modal-product-add').modal('hide')
+                    }, 200);
+                    
+                }else{
+                    var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-thumbs-o-down"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    form.find('.modal-body').prepend( errorElement );
+                    $.each(response.errors, function(field, msg){
+                        $('.'+field).parent().append( '<div class="text-danger fieldErrorMsg">'+msg+'.</div>' );
+                    })
+                }
+            },
+            error: function (xhr, desc, err)
+            {
+                var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-times-circle-o"></i> <b>'+ desc +': </b>'+ err +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                form.find('.modal-body').prepend( errorElement );
+            }
+        });
+    });
+
+    // var descriptionEdit;
+    // var editor = ClassicEditor
+    // .create( document.querySelector( '.description' ) )
+    // .then( editor => {
+    //     window.editor = editor;
+    //     descriptionEdit = editor;
+
+    // } )
+    // .catch( error => {
+    //     console.error( error );
+    // } );
+
+    var detailed_table = $('#exportTable').DataTable({
+        'processing': true,
+        'serverSide': true,
+        "autoWidth": false,
+        'serverMethod': 'post', 
+        "pagingType": "full_numbers",
+        "pageLength": 10,
+        "sortable": true,
+        "aaSorting": [],
+        "order": [], 
+        "columnDefs": [{
+            "targets": 'no-sort',
+            "orderable": false,
+            "order": [],
+        }],
+        'ajax': {
+            'url':'{base_url(log_user_type())}/inventory/get_categories_details',
+            'type': "POST", 
+            'data' : { 
+                'category_id' : '{$search_arr['category_id']}',
+                // 'status' : '{$search_arr['status']}',
+                'order_by' : '{$search_arr['order_by']}',  
+            }
+        },
+        'columns': [
+            { data: 'index'},
+            { data: 'image1', mRender: function(data, type, row) {
+                var link = '<div class="flag" style="width: 100%;"><img src="{assets_url()}images/category/'+row.image+'" class="img-thumbnail" alt="Product image"style="max-width: 70px;"></div>';
+                return link;
+            }},
+            { data: 'category_name', mRender: function(data, type, row) {
+                var html = '<h6> '+data+' </h6>';
+                html += '<span>'+ row['description'] +'</span>';
+                if(row['parent'] != 'Null' && row['parent'] != 0){
+                    html +=  '<span class="clearfix"></span>';
+                    html +=  '<span class="badge rounded-pill badge-primary">'+ row['parent_name'] +'</span>'; 
+                }
+                return html;
+            }},
+            { data: 'main_item_code'},
+            { data: 'sort_order'},
+            { data: 'date'},
+            { data: 'id', mRender: function(data, type, row) {
+                var  link= ''
+                link +="<a rel='tooltip' title='Edit' class='btn btn-outline-success btn-sm me-3 items_edit' type='button' data-original-title='Edit' data-enc_id='"+row.enc_id+"' ><i class='fa fa-edit'></i></a>";
+            // link +="<a rel='tooltip' title='Inactivate' class='btn btn-outline-danger btn-sm delete_item' type='button' data-original-title='Inactivate' data-enc_id='"+row.enc_id+"' ><i class='fa fa-close'></i></a>";
+                if(row.status=='active'){
+                 link +="<a rel='tooltip' title='Inactivate' class='btn btn-outline-danger btn-sm me-3 delete_item' type='button' data-original-title='Inactivate' data-enc_id='"+row.enc_id+"' data-status='"+row.status+"'><i class='fa fa-close'></i></a>";
+             }else{
+               link +="<a rel='tooltip' title='Activate' class='btn btn-outline-info btn-sm me-3  delete_item' type='button' data-original-title='Activate' data-enc_id='"+row.enc_id+"'  data-status='"+row.status+"'><i class='fa fa-check'></i></a>";
+           }
+           link +="<a rel='tooltip' title='Delete' class='btn btn-outline-danger btn-sm me-3 items_delete' type='button' data-original-title='Edit' data-enc_id='"+row.enc_id+"' ><i class='fa fa-trash'></i></a>";
+           return link;
+       }}, 
+   ],
+   success: function(response) { 
+   } 
+});
+    $(document).on("click", ".items_edit", function(event){
+        $.ajax({
+            type:'POST',
+            url:"{base_url('admin/inventory/get-category-info')}",
+            data: { id: $(this).data('enc_id')} ,
+            dataType:'json',
+            beforeSend: function(){
+                $('#modal-product-edit').modal('show'); 
+            },
+        })
+        .done(function( response ) {  
+            if(response.success){
+                $('#modal-product-edit .modal-content').html(response.html); 
+                if (CKEDITOR.instances.description) { 
+                    console.log(CKEDITOR.instances)
+                    CKEDITOR.instances.description.destroy();
+                    CKEDITOR.replace( 'description', {
+                        on: {
+                            contentDom: function( evt ) {
+                               evt.editor.editable().on( 'contextmenu', function( contextEvent ) {
+                                var path = evt.editor.elementPath();
+
+                                if ( !path.contains( 'table' ) ) {
+                                    contextEvent.cancel();
+                                }
+                            }, null, null, 5 );
+                           }
+                       }
+                   } );
+                }
+            }
+
+        }); 
+
+    }); 
+
+    $(document).on("submit", "#edit-form", function(event)
+    {
+        var form = $(this)
+        event.preventDefault();
+        $.ajax({
+            url: "{base_url()}admin/inventory/save-category",
+            type: $(this).attr("method"),
+            dataType: "JSON",
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            beforeSend: function(){
+                $("#edit-form .errorMsg").slideUp(500).remove();
+                $("#edit-form .fieldErrorMsg").slideUp(500).remove();
+                $("#edit-form .help-block").slideUp(500).remove();
+
+            },
+            success: function (response, status)
+            {
+                if(response.success){
+                    var errorElement = '<div class="alert alert-success outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-check"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    
+                    form.find('.modal-body').prepend( errorElement );
+                    $("#edit-form .errorMsg").fadeTo(2000, 500).slideUp(500, function() {
+                        $("#edit-form .errorMsg").slideUp(500)
+                    });
+                    
+                    form.removeClass("was-validated");
+                    detailed_table.ajax.reload(null, false );
+                    setTimeout(function(){
+                        $('#modal-product-edit').modal('hide')
+                    }, 200);
+                }else{
+
+
+                    var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-thumbs-o-down"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    form.find('.modal-body').prepend( errorElement );
+
+                    $.each(response.errors, function(field, msg){
+                        $('#'+field).parent().append( '<div class="text-danger fieldErrorMsg">'+msg+'.</div>' );
+                    })
+                }
+            },
+            error: function (xhr, desc, err)
+            {
+
+                var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-times-circle-o"></i> <b>'+ desc +': </b>'+ err +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                form.find('.modal-body').prepend( errorElement );
+            }
+        });
+    });
+    $(document).ready(function() {
+     $('#gridCheck').change(function() {
+        if($('#gridCheck').attr('checked',true))
+        {
+           if(!$(this).is(":checked"))
+           {
+
+            $('.cat').hide();
+        }
+        else{
+
+           $('.cat').show();
+       }
+   }
+});
+     $('.category_async').select2({
+        placeholder: 'Select a Category',
+        dropdownParent: $('#modal-product-add'),
+        ajax: {
+            url:'{base_url()}{log_user_type()}/autocomplete/product_categories',
+
+            type: 'post',
+            dataType: 'json',
+            delay:250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            }
+        },
+    }); 
+ });
+    $(document).on("click", ".delete_item", function(event){
+        $.ajax({
+            type:'POST',
+            url:"{base_url('admin/inventory/insert_status')}",
+            data: { id: $(this).data('enc_id') , status: $(this).data('status')} ,
+            dataType:'json',
+        })
+        .done(function( response ) {  
+            if(response.success){
+               detailed_table.ajax.reload(null, false );
+               toastr.success(response.msg, "success: ",{ progressBar:!0 })
+           }
+           else
+           {
+            toastr.error(response.msg, "error: ",{ progressBar:!0 })
+        }
+
+    }); 
+
+    }); 
+    $(document).on("click", ".items_delete", function(event){
+        var val=$(this).data('enc_id');
+        $.ajax({
+            type:'POST',
+            url:"{base_url('admin/inventory/deleteCategoryManagement')}",
+            data: { id: val} ,
+            dataType:'json',
+            
+        })
+        .done(function( response ) {  
+            if(response.status){
+                detailed_table.ajax.reload(null,false);
+                toastr.success(response.msg,'success:')
+            }
+            else{
+                toastr.error(response.msg, "error: ",{ progressBar:!0 })
+
+            }    
+
+            
+        }); 
+
+    }); 
+
+
+</script>
+{/block}

@@ -1,0 +1,173 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/select2/select2.min.css')}">
+
+{/block}
+{block name="body"}
+<div class="card">
+    <div class="card-header">
+
+        <h5>{lang('text_user_account_details')}</h5>
+
+    </div>
+    <div class="card-body ">
+       {form_open('', 'role="form" class="smart-wizard form-horizontal" method="post"  name="user_account" id="user_form"')}
+       <input type="hidden" name="category_type" id="category_type" value="{$category_type}" >
+       <div class="table-responsive">
+        <div class="table-responsive">
+            <table class="table">
+                <tbody>
+                    <tr>
+                      <td style="text-align: right;"> 
+                          <label class="col-lg-6 col-md-4 col-sm-4 col-xs-4 control-label">
+                            {lang('text_username')}<span class="symbol required"></span>
+                        </label>
+                    </td>
+                    <td >
+                        <div class="col-lg-6 col-md-8 col-sm-8 col-xs-8">
+
+                           <input type="text"  class="form-control" data-lang="{lang('text_username')}" id="user_name" name="user_name" value="{$user_name}" onClick="autoComplete(this, 'admin', 'autocomplete/user_filter')" autocomplete="Off" >
+                           {form_error("user_name")}
+                       </div>
+                   </td>                            
+
+               </tr>  
+               <tr>
+                   <td style="text-align:right;">
+                      <label class="col-lg-6 col-md-4 col-sm-4 col-xs-4 control-label">
+                        {lang('text_category')} <span class="symbol required"></span>
+                    </label>
+                </td>
+                <td>
+                    <div class="col-lg-6 col-md-8 col-sm-8 col-xs-8">
+                        <select class="form-control" name="category" id="category">
+                            <option value="all" {set_select('category', "all")}>{lang('text_all')}</option>
+                            {foreach $category_details as $v}
+                            <option value="{$v.id}"  {set_select('category', {$v.id})}> {lang($v.db_amt_type)}
+                                {/foreach}
+                            </option>
+                        </select>
+                        {form_error("category")}
+                    </div> 
+                </td>
+
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                   <div class="col-sm-7 col-sm-offset-4">
+                      
+                    <button class="btn btn-primary" name="view_details" id="view_details" value="add_amount" type="submit"> {lang('text_submit')}</button>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div>
+</div>
+{form_close()}  
+<div class="panel-body"> 
+    {if count($account_details)>0} 
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover table-full-width" id="sample_1">
+            <thead>    
+                <tr>
+                    <th>{lang('text_sl_no')}</th>
+                    <th>{lang('text_user')}</th>
+                    {if $category_id == "all"}
+                    <th>{lang('text_category_name')}</th>
+                    {/if}
+                    <th>{lang('text_amount')}</th>                              
+                    <th>{lang('text_type')}</th>                                 
+                    <th>{lang('text_date')}</th>
+                    <th>{lang('text_total')}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {foreach $account_details as $v}
+                <tr>
+                    <td>{counter}</td>
+                    <td>{ucwords($v.from_name)}</td>
+                    {if $category_id == "all"}
+                    <td>{$v.category_name}</td>
+                    {/if}                                
+                    <td class="text-right">{$v.amount_view}</td>
+                    <td class="text-center"> 
+                        {if $v.fund_transfer_type == 'credit'}
+                        {assign var="type_label" value="text-success"}
+                        {else}
+                        {assign var="type_label" value="text-danger"}
+                        {/if}
+
+                        <span class="text-bold {$type_label}"> {ucwords($v.fund_transfer_type)}</span>
+                        {if $category == 5}
+                        <span class="clearfix">{$v.transaction_note}</span>
+                        {/if}
+
+                        {if $v.payout_status != "NA"}
+                        <font color="blue">{$v.payout_status} </font>
+                        {/if}
+                    </td>                               
+                    <td>{$v.date_of_submission}</td>
+                    <td class="text-right"><b>{$v.user_page_total_amount}</b></td>
+                </tr>
+                {/foreach}
+
+            </tbody>
+        </table>
+        <div class="well well-lg">
+            <h4> 
+                {lang('text_aggregate_details')}
+            </h4>
+            <dl class="dl-horizontal">
+                {if {set_value('user_name')}}
+                <dt>
+                    {lang('text_user')}
+                </dt>
+                <dd>
+                    {set_value('user_name')}
+                </dd>
+                {/if}
+                <dt>   
+                    {lang('text_date')}
+                </dt>
+                <dd>
+                    {$smarty.now|date_format:"%Y-%m-%d"}
+                </dd>
+                <dt>   
+                    {lang('text_aggregate_total')}
+                </dt>
+                <dd>
+                    {$user_total_amount}
+                </dd>
+            </dl>
+        </div>
+    </div>
+    {else}
+    <div class="alert alert-block alert-warning fade in">
+        <p>
+            <h3 class="text-center"> 
+                <i class="fa fa-exclamation"> {lang('text_no_transfer_details_found')}</i>
+            </h3>
+        </p>
+    </div>
+    {/if} 
+</div>
+</div>
+</div>
+
+
+{/block}
+{block name="footer"}
+
+</div>
+</div>
+
+<script src="{assets_url('plugins/select2/select2.min.js')}"></script>
+<script type="text/javascript"> 
+    $('#from_user').select2(); 
+    $('#to_user').select2(); 
+</script>
+
+{/block}

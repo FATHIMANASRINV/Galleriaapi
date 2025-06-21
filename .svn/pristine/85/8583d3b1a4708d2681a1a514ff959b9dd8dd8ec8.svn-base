@@ -1,0 +1,172 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/datepicker/css/metallic/zebra_datepicker.min.css')}">
+
+<link href="{assets_url()}plugins/DataTables/datatables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/DataTables/DataTables-1.12.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/select2/select2.min.css" rel="stylesheet" />
+
+{/block}
+{block name="body"}
+
+<div class="row "> 
+	<div class="col-sm-12"> 
+	{* 	<div class="card">
+			
+			<div class="card-body">  *}
+				{form_open('','')}
+				<div class="form-body">
+					<div class="row">
+						<div class="col-sm-4">
+							<div class="form-group">
+								{* <label for="user_name" class="control-label">{lang('username')}</label> *}
+								<select name="user_name" id="user_name" class="form-control user_name_ajax" {set_select('user_name', set_value('user_name'))}>
+									{if $post_arr['user_name']}
+									<option value="{$post_arr['user_name']}" selected>{$post_arr['user_names']}</option>
+									{/if}
+								</select>
+								
+							</div>
+						</div>
+						<div class="col-sm-4">
+							<div class="form-group">
+
+								{* <label for="from_date">{lang('from_date')}</label> *}
+								<div class="col-10">
+									<input class="form-control" type="date"  id="from_date" name="from_date" value="{$post_arr['from_date']}">
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-4">
+							<div class="form-group">
+
+								{* <label for="end_date">{lang('end_date')}</label> *}
+								<div class="col-10">
+									<input class="form-control" type="date" id="end_date" name="end_date" value="{$post_arr['end_date']}">
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-4"> <br>
+							<button type="submit" class="btn btn-primary" name="submit" value="search">
+								<i class="fa fa-filter"></i> {lang('filter')}
+							</button>
+							<button type="submit" class="btn btn-warning mr-1" name="submit" value="reset">
+								<i class="fas fa-retweet"></i>  {lang('reset')}
+							</button> 
+						</div>
+					</div>
+				</div>
+				{form_close()}
+			{* </div>
+			
+		</div>  *}
+	</div> 
+</div><br>
+
+<div class="row "> 
+	<div class="col-sm-12"> 
+		<div class="card"> 
+
+			<div class="card-header">
+				<h5>{$title}</h5>
+				
+			</div>
+
+			<div class="card-content">
+				<div class="card-body">  
+					
+					<div class="table-responsive">
+						<table class="table color-table primary-table" id="exportTable">
+							<thead >
+								<tr>
+									<th>#</th>
+									{* <th>{lang('type')}</th>   *}
+									<th>{lang('username')}</th>
+									<th>{lang('completed_days')}</th>
+									<th>{lang('pending_days')}</th>  
+									<th>{lang('earn_amount')}</th>  
+									<th>{lang('date')}</th>  
+								</tr>
+							</thead>
+							<tbody>
+								{foreach $roi_details as $v}
+								<tr>
+									<td>{counter}</td>
+									<td>{$v.user_name}</td> 
+									<td>{$v.roi_count}</td>
+									<td>{$v.pending_days}</td> 
+									<td>{$v.earn_amount}</td> 
+									<td>{$v.update_date}</td> 
+
+								</tr> 
+								{/foreach}
+							</tbody> 
+						</table>
+
+					</div>
+				</div>
+			</div>
+		</div> 
+	</div> 
+</div>
+
+{/block}
+{block name="footer"}
+
+<script src="{assets_url('plugins/datepicker/zebra_datepicker.min.js')}"></script>
+
+<script src="{assets_url()}plugins/DataTables/datatables.min.js"></script>
+<script src="{assets_url('plugins/DataTables/media/js/jquery.dataTables.min.js')}"></script>
+<script src="{assets_url()}plugins/select2/select2.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/dataTables.buttons.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/jszip.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/pdfmake.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/vfs_fonts.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/buttons.html5.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/buttons.print.min.js"></script>
+<script src="{assets_url()}plugins/select2/select2.min.js"></script>
+
+<script type="text/javascript">
+
+	$('#from_date').Zebra_DatePicker({
+        pair: $('.to_date')
+    });
+    $('#end_date').Zebra_DatePicker();
+
+	$(document).ready(function() {
+		// $('#exportTable').DataTable( {
+		// 	dom: 'Bfrtip',
+  //       buttons: [
+  //           'copyHtml5',
+  //           'excelHtml5',
+  //           'csvHtml5',
+  //           'pdfHtml5'
+  //       ]
+		// } );
+	
+
+
+		$('.user_name_ajax').select2({
+			placeholder:'{lang('select_a_user')}',
+			ajax: {
+				url: '{base_url()}admin/autocomplete/getUser_ajax',
+				type:'post',
+				dataType: 'json',
+				delay: 250,
+				processResults: function (data) { 
+					return {
+						results: data
+					};
+
+				},
+				cache: true
+			}
+
+		}); 
+	});
+
+
+</script>
+
+{/block}

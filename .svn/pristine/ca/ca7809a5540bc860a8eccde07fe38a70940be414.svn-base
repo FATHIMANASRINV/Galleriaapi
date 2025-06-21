@@ -1,0 +1,126 @@
+<div class="modal-header">
+    <h4 class="modal-title" id="myLargeModalLabel">{lang('Edit_Dimensions')}</h4>
+    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+{form_open_multipart('','id="edit-form" class="needs-validation" novalidate=""')}
+<div class="modal-body">
+
+    <div class="form-group mb-3">
+
+        <input type="hidden" name="id" id="id" required value="{$details['id']}">
+        <input type="hidden" name="submit" value="update">
+
+    {*     <div class="col-sm-12">
+            <input class="form-control name" type="text" name="name" id="name" placeholder="Name" required autocomplete="off" value="{$details['name']}">
+        </div> *}
+    </div>
+
+    <div class="form-group mb-3" >
+        <div class="row">
+           <div class="col-sm-6">
+             <select class="category_async col-sm-12"  name="category_id"  required>
+                {if $details['category_id']}
+                <option value="{$details['category_id']}">{$details['category_name']}</option>
+                {/if} 
+            </select>
+            {form_error("category_id")}
+        </div>
+{* </div> 
+
+<div class="form-group mb-3"> *}
+    <div class="col-sm-6"> 
+        <input class="form-control code" type="text" name="code" id="code" placeholder="Code" value="{$details['code']}" required autocomplete="off">
+    </div>
+</div>
+</div>
+<div class="form-group mb-3">
+    <div class="row">
+        <div class="col-sm-6"> 
+            <input class="form-control" type="text" name="sort_order" id="sort_order" placeholder="Sort Order" value="{$details['sort_order']}" required autocomplete="off">
+        </div>
+        <div class="col-sm-6">
+            <select name="status" id="status" class="form-control" required >
+                <option value="" selected disabled>Select Status</option>
+                <option value="yes" {if $details['status'] == 'yes'} selected {/if}>{lang('Active')}</option>
+                <option value="no" {if $details['status'] == 'no'} selected {/if}>{lang('Inactive')}</option>
+            </select>
+            {form_error("status")}
+        </div>
+    </div>
+</div>
+{* <div class="form-group mb-3">
+ <div class="row">
+     <ul class="nav nav-tabs m-b-30" id="pills-warningtab1" role="tablist">
+        {foreach $curr_arr as $v}
+         <li class="nav-item"><a class="nav-link {if $v.code=='USD'}active{/if} lang1" id="pills-warning-{$v.code}-tab" data-bs-toggle="pill" href="#pills-warning-{$v.code}" role="tab" aria-controls="pills-warning-{$v.code}" aria-selected="true" data-code="{$v.code}">{lang({$v.title})}</a></li>
+         {/foreach} 
+     </ul>
+     <div class="tab-content " id="pills-warningtab1Content">  
+       {foreach $curr_arr as $v}
+       <div class="tab-pane fade  show {if $v.code=='USD'} active{/if} " id="pills-warning-{$v.code}" role="tabpanel" aria-labelledby="pills-warning-{$v.code}-tab">
+         <div class="row">
+            <div class="col-sm-6">
+                <input class="form-control" type="text" name="name_{$v.code}" id="name_{$v.code}" placeholder="{lang('dimension_name')}" required autocomplete="off">
+                <div class="invalid-feedback">
+                    {lang('field_required')}
+                </div>
+            </div>
+        </div>
+    </div>
+    {/foreach}
+</div> *}
+
+<div class="form-group mb-3">
+ <div class="row">
+
+     <div class="col-sm-12">
+        <input class="form-control" type="text" name="name" id="name" placeholder="Name" required autocomplete="off"  value="{$details['name']}">
+        <div class="invalid-feedback">
+            {lang('field_required')}
+        </div>
+    </div>
+    <div class="tab-content " id="pills-warningtab1Content">  
+
+    </div>
+</div>
+</div>
+{* 
+<div class="form-group">
+
+
+</div> *}
+
+</div>
+<div class="modal-footer"> 
+    <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+    <button class="btn btn-info btn-air-primary update-category" type="submit" name="edit" id="edit" value="Submit" >{lang('update')}</button>
+</div>
+{form_close()}   
+
+<script type="text/javascript">
+
+ $(document).ready(function() {
+
+   $('.category_async').select2({
+
+    placeholder: 'Select a Category',
+    dropdownParent: $('#modal-product-edit'),
+    ajax: {
+        url:'{base_url()}{log_user_type()}/autocomplete/product-categories',
+
+        type: 'post',
+        dataType: 'json',
+        delay:250,
+        processResults: function(data) {
+            return {
+                results: data
+            };
+        }
+    },
+}); 
+
+});
+
+
+</script>

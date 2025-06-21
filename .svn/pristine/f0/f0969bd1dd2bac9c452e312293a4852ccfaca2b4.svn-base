@@ -1,0 +1,119 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Calculation_model extends Base_model {
+
+    function __construct() {
+        parent::__construct();
+
+    } 
+
+    public function insertCommissionDetails($data, $table,$wallet) {
+        $data['amount_payable'] = $data['total_amount'];
+        if ($data['amount_payable']) {
+            $result =  $this->db->insert( $table, $data);
+            if($result )
+            {
+                // $wallet = $this->Base_model->getAmountTypeName($amount_type_id);
+                $this->Base_model->addUserWalletAmount( $data['user_id'], $data['amount_payable'], $wallet );
+            }
+            $this->db->cache_delete('admin', 'business');
+            $this->db->cache_delete('user', 'business');
+            $this->db->cache_delete('admin', 'dashboard');
+            $this->db->cache_delete('user', 'dashboard');
+            $this->db->cache_delete('admin', 'report');
+            $this->db->cache_delete('user', 'report');
+            return $result;
+        }
+
+        return TRUE;
+    }
+
+
+    public function insertLevelBonus($upline_id, $level_bonus, $from_user_id,$date) {
+       $this->db->cache_delete();
+       $result = TRUE;
+       $this->load->model('Settings_model');
+       if ($upline_id != "") {
+         
+        $level_info = $this->Settings_model->getlevelDetails();
+        $uplines = $this->getUplineUsersUnilevel($upline_id, count($level_info), true);
+
+        if($level_info){
+            foreach ($uplines as $level => $users) {
+
+                $level_details = $level_info[$level+1];
+                $level_percentage =$level_details['level_commission'];
+
+                if($level_percentage > 0) {
+                    $amount = $level_bonus * $level_percentage / 100;
+                    $comm = [
+                        'user_id' => $users['user_id'],
+                        'total_amount' => $amount,
+                            // 'amount_type_id' => $amount_type_level,
+                        'date_of_submission' => $date,
+                        'from_id' => $from_user_id,
+                        'fund_transfer_type' => 'credit',
+                        'transaction_note' => 'Level'.$level_details['level_no'],
+
+                    ];
+
+                    $result = $this->Calculation_model->insertCommissionDetails( $comm,'level_bonus','level_bonus');
+                }
+            }
+        }
+    }
+    return $result;
+}
+
+
+public function getUplineUsersUnilevel($user_id, $level = 15, $child=false) {
+    $i = 0;
+    $admin_id = 16;
+    $uplines = array();
+    if($child) {
+        $info = [
+            'user_id' => $user_id,
+            'status' => 1,
+        ];
+        $uplines[$i] = $info;
+        $i++;
+    }       
+    if($user_id != $admin_id){
+        while ($user_id != 0 && $user_id != "" && $i < $level) {
+
+            $user_arr = [];
+            $this->db->select('sponsor_id as user_id, status')
+            ->from('user_info')
+            ->where('user_id', $user_id)
+            ->where('user_type !=', 'admin')
+            ->limit(1);
+            $query = $this->db->get();
+            $user_id = 0;
+            foreach ($query->result_array() as $row) {
+                if($row['user_id'] != $admin_id){
+                    $user_arr = $row; 
+                    $uplines[$i] = $row; 
+                    $user_id = $row['user_id'];
+                }
+            }
+            $i++;
+        }
+    }
+    return $uplines;
+}
+
+public function getLevelPercentage($level) {
+
+    $this->db->select('level_commission');
+    $this->db->from('level_commission');
+    $this->db->where('id', $level);
+    $res = $this->db->get();
+
+    if($res->row()) {
+        return $res->row()->level_commission;
+    }
+
+    return 0;
+}
+
+}

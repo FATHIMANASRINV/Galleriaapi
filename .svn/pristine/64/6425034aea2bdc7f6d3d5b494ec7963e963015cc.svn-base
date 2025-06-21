@@ -1,0 +1,117 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/select2/select2.min.css')}">
+{/block}
+{block name="body"}
+
+<div class="card">
+	<div class="card-header">
+		
+		<h5 class="mb-0" data-anchor="data-anchor">{lang('fund_transfer')}</h5>
+
+	</div>
+	<div class="card-body ">
+		
+		{form_open('','role="form"  class="row g-3 needs-validation" method="post" name="compose" id="compose" novalidate=""')}
+
+
+		<div class="col-md-6">
+			<label class="form-label">{lang('from_user')}</label>
+			<select class="form-control user_name_ajax" name="from_user" id="from_user">
+				{if $post_arr['user_name']}
+				<option value="{$post_arr['user_name']}" selected>{$post_arr['user_name']}</option>
+				{/if}
+			</select>
+			{form_error('from_user')}
+		</div>
+		<div class="col-md-6">
+			<label class="form-label">{lang('to_user')}</label>
+			<select class="form-control user_name_ajax" name="to_user" id="to_user">
+				{* <option value=""></option> *}
+				{if $post_arr['user_name']}
+				<option value="{$post_arr['user_name']}" selected>{$post_arr['user_name']}</option>
+				{/if}
+			</select>
+			{form_error('to_user')}
+		</div>
+
+		<div class="col-md-6">
+			<div class="form-group">
+				<label class="form-label" for="validationCustomUsername">{lang('amount')}</label>
+
+				<div class="controls">
+					<input type="number" class="form-control" name="amount" value="" autocomplete="off" required> 
+					<div class="invalid-feedback">{lang('enter_an_amount')}</div>
+					{form_error("amount")}
+
+				</div>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="form-group">
+				<label class="form-label" for="validationCustomUsername">{lang('security_pin')}</label>
+
+				<div class="controls">
+					<input type="password" class="form-control" name="security_pin" value="" autocomplete="off" required> 
+					<div class="invalid-feedback">{lang('security_password')}</div>
+
+					{form_error("security_pin")}
+				</div>
+			</div>
+		</div>
+		<div class="col-md-12">
+			<div class="form-group">
+				<label class="form-label">{lang('transaction_note')}</label>
+				<div class="controls">
+					<input class="form-control"  name="trans_note" type="text" value="" autocomplete="off" required />
+					<div class="invalid-feedback">{lang('transaction_note')}</div>
+
+					{form_error("trans_note")}
+				</div>
+			</div>
+		</div>
+
+
+
+		<div class="col-12">
+			<button type="submit" class="btn btn-primary" name="send" value="send" id="send">{lang('send')}<i class="fa fa-arrow-circle-right"></i></button>
+			
+		</div>
+		{form_close()}
+	</div>
+</div>
+{/block}
+{block name="footer"}
+
+</div>
+</div>
+
+<script src="{assets_url('plugins/select2/select2.min.js')}"></script>
+
+<script type="text/javascript"> 
+	$('#from_user').select2(); 
+	$('#to_user').select2(); 
+	$(document).ready( function () {
+
+		$('.user_name_ajax').select2({
+			placeholder:'{lang('select_a_user')}',
+			ajax: {
+				url: '{base_url()}admin/autocomplete/getUser_ajax',
+				type:'post',
+				dataType: 'json',
+				delay: 250,
+				processResults: function (data) { 
+					return {
+						results: data
+					};
+
+				},
+				cache: true
+			}
+
+		});
+
+	});
+</script>
+
+{/block}

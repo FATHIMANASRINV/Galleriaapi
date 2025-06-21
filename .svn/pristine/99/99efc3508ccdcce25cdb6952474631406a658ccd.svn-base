@@ -1,0 +1,217 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Mail extends Base_Controller {
+
+	function __construct()
+	{
+		parent::__construct(); 	
+	}
+	public function inbox($con='')
+	{   
+		$data['con']=$con;
+		$data['title'] = lang('text_mail_management');  
+		$data['recent_msg'] = $this->Mail_model->getUserMessages(log_user_id(),'','no'); 
+		$data['messages'] = $this->Mail_model->getUserMessages(log_user_id(),'','yes'); 
+		$data['all'] = $this->Mail_model->getUserMessages(log_user_id()); 
+		if($this->input->post('delete'))
+		{
+			$post_arr = $this->input->post();
+			foreach($post_arr['checkbox'] as $v)
+			{
+				$update_mail = $this->Mail_model->updateMail($v);
+			}
+			if($update_mail)
+			{
+				$msg = lang('delete_mail');
+				$this->redirect($msg,'mail/inbox',TRUE);
+			}
+			else
+			{
+				$msg = lang('error_delete_mail');
+				$this->redirect($msg,'mail/inbox',FALSE);
+			}
+		}
+		$this->loadView($data);
+	}
+	public function email_detail($enc_id,$type='')
+	{   
+		$id = $this->Base_model->encrypt_decrypt('decrypt',$enc_id);
+		$data['mail_details'] = $this->Mail_model->getUserMessages('',$id,''); 
+		if($type)
+			$update = $this->Mail_model->updateReadStatus($id,log_user_id()); 
+
+    // print_r( $data['mail_details']);die();
+		$data['title'] = lang('text_mail_details');  
+
+		$this->loadView($data);
+	}
+	public function compose_mail($enc_id='',$id='')
+	{   
+		$data['title'] = lang('text_compose_mail'); 
+		$from_id = log_user_id();
+		$date = date('Y-m-d H:i:s');  
+
+		if($enc_id)
+		{
+			$from_id = $this->Base_model->encrypt_decrypt('decrypt',$enc_id);
+			if($id)
+			{
+				$data['mail_details'] = $this->Mail_model->getUserMessages('',$id,'',$from_id); 
+			}
+         // print_r( $data['mail_details']);die();
+			$data['user_name'] = $this->Base_model->getUserName($data['mail_details']['from_user']);
+		}
+
+		if($this->input->post('send'))
+		{
+			$this->load->config('ssl');
+			$demo_mode=$this->config->item('demo_mode');
+			if($demo_mode)
+			{
+				$msg=lang('site_under_maintenance');
+
+				$this->redirect( $msg, "mail/compose-mail", FALSE);
+
+			}
+
+			if ($this->validate_compose_mail()) {
+				$details = $this->input->post(); 
+				$subject = $details['subject']; 
+				$message = htmlentities($details['content']);
+				$user_name = $details['user_name'];
+				$type = 'message_to_multiple_user';
+				$details['sent_to'] = 'multiple';
+				$attachment=NULL;
+				if($_FILES['attachment']['error'] != 4)
+				{
+					$config['upload_path'] = './assets/images/attachments/';
+					$config['allowed_types'] = 'gif|jpg|png|jpeg';
+					$config['max_size'] = '10000';
+					$config['remove_spaces'] = true;
+					$config['overwrite'] = false;
+					$config['encrypt_name'] = TRUE;
+
+					$this->load->library('upload', $config);
+					$msg = '';
+					if (!$this->upload->do_upload('attachment')) {
+						$msg = lang('text_image_not_selected');
+						$error = $this->upload->display_errors();
+						$this->redirect( $error, "mail/compose-mail", false );
+					} else {
+						$arr = $this->upload->data();  
+						$attachment = $arr['file_name'];
+
+					}
+				}
+				if(element('attachments',$details))
+				{
+					$attachment= $details['attachments'];
+				}
+
+				$to_user_id = $this->Base_model->getUserId($user_name);
+				if($attachment == NULL)
+				{
+					$attachment = 'NULL';
+				}
+				$result = $this->Mail_model->sendMessage($to_user_id,  $subject, $message, $date, log_user_id(), $type,$attachment);
+
+
+				if ($result) { 
+					$details = serialize($details);
+					$msg = lang('message_send_successfully');
+					$this->redirect($msg,'mail/compose-mail',TRUE);
+
+				} else {
+					$msg = lang('error_on_message_sending');
+					$this->redirect($msg,'mail/compose-mail',FALSE);
+				}
+			}
+			else{
+				$msg =lang('invalid_fields');
+				$this->redirect($msg, 'mail/compose-mail', FALSE);
+			}  
+		}
+		$this->loadView($data);
+	}
+
+
+	function validate_compose_mail() { 
+		$this->form_validation->set_rules('user_name', lang('user_name'), 'trim|required|strip_tags');
+		$this->form_validation->set_rules('subject', lang('subject'), 'trim|required|strip_tags');
+		$this->form_validation->set_rules('content', lang('message'), 'trim|required');
+		$validate_form = $this->form_validation->run(); 
+        // print_r($this->form_validation->error_array());die();
+		return $validate_form;
+	}
+	public function mail_sent($con='')
+	{   
+		$data['con']=$con;
+		$data['title'] = lang('sent_items');
+		if($con==2 or !$con)  
+			$data['recent_msg'] = $this->Mail_model->getUserMessages('','','no',log_user_id()); 
+        // print_r($data['recent_msg']);die();
+		$data['messages'] = $this->Mail_model->getUserMessages('','','yes',log_user_id());
+
+		$data['all'] = $this->Mail_model->getUserMessages('','','',log_user_id()); 
+		if($this->input->post('delete'))
+		{
+			$post_arr = $this->input->post();
+			foreach($post_arr['checkbox'] as $v)
+			{
+				$update_mail = $this->Mail_model->updateMail($v);
+			}
+			if($update_mail)
+			{
+				$msg = lang('delete_mail');
+				$this->redirect($msg,'mail/mail-sent',TRUE);
+			}
+			else
+			{
+				$msg = lang('error_delete_mail');
+				$this->redirect($msg,'mail/mail-sent',FALSE);
+			}
+		}
+		$this->loadView($data);
+	}
+	public function delete_mail($path,$enc_id)
+	{   
+		$id = $this->Base_model->encrypt_decrypt('decrypt',$enc_id);
+		$update_mail = $this->Mail_model->updateMail($id);
+		if($update_mail)
+		{
+			$msg = lang('delete_mail');
+			$this->redirect($msg,'mail/'.$path,TRUE);
+		}
+		else
+		{
+			$msg = lang('error_delete_mail');
+			$this->redirect($msg,'mail/'.$path,FALSE);
+		}
+	}
+
+	public function star_message($path='',$status='',$enc_id)
+	{  
+		$id = $this->Base_model->encrypt_decrypt('decrypt',$enc_id);
+		$data['result'] = $this->Mail_model->updateStarred($id,$status);
+		if ($data['result']) {
+			$this->redirect('','mail/'.$path); 
+		}
+		else {
+			$this->redirect(lang('cannot_star_the_mail'),'mail/'.$path,FALSE); 
+		}
+
+		$this->loadView($data);
+	}
+
+	public function mark_all_read()
+	{  
+		$update = $this->Mail_model->updateReadStatus('',log_user_id());
+		if ($update) {
+			$this->redirect('','dashboard',TRUE); 
+		}
+		else {
+			$this->redirect(lang('failed_to_mark_all_as_read'),'dashboard',FALSE); 
+		}
+
+	}
+}

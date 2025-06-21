@@ -1,0 +1,100 @@
+
+
+{if $product_details}
+<div class="row row-sm">
+	{foreach $product_details as $p} 
+	<div class="col-md-6 col-lg-6 col-xl-4  col-sm-6">
+
+		<div class="card">
+			<div class="card-body h-100">
+				<div class="pro-img-box">
+					<div class="product-sale">
+						<div class="badge bg-pink">New</div>
+						<a class=" add-to-whishlist" data-productID="{$p['enc_product_id']}" data-defaultColorID="{$p['default_color_id']}" data-defaultDimensionID="{$p['default_dimension_id']}"><i class="mdi mdi-heart-outline ms-auto wishlist" title="Add to wishlist"></i></a>
+					</div>
+
+					<a href="{base_url()}user/inventory/product_details/{$p.enc_product_id}"><img class="w-100 rounded-3" src="{assets_url()}images/products/{$p.image}" alt="product-image">
+					</a>
+					<a  class="adtocart add-to-cart"  title="Add to cart"  data-productID="{$p.enc_product_id}"><i class="las la-shopping-cart "></i>
+					</a>
+				</div>
+				<div class="text-center pt-3">
+					<h3 class="h6 mb-2 mt-4 fw-bold text-uppercase">{$p.product_name}</h3>
+					<span class="fs-15 ms-auto">
+						<i class="ion ion-md-star text-warning"></i>
+						<i class="ion ion-md-star text-warning"></i>
+						<i class="ion ion-md-star text-warning"></i>
+						<i class="ion ion-md-star-half text-warning"></i>
+						<i class="ion ion-md-star-outline text-warning"></i>
+					</span>
+					<h4 class="h5 mb-0 mt-2 text-center fw-bold text-danger">{cur_format($p.price)} <span
+						class="text-secondary fw-normal fs-13 ms-1 prev-price">{cur_format($p.strike_price)}</span>
+					</h4>
+				</div>
+			</div>
+		</div>
+	</div>
+	{/foreach}
+		<div class="col-md-12">
+			<nav class="text-center">
+				<ul class="pagination product-pagination ms-auto text-center ">
+
+					<a class="page-item pagination_next ">{$links}</a>
+
+
+				</ul>
+			</nav>
+		</div>
+
+	{* <ul class="pagination product-pagination ms-auto float-end mb-3 ps-2">
+		
+		<li class="page-item pagination_next"><a class="page-link">{$links}</a></li>
+		
+	</ul>
+ *}
+
+	{/if}
+
+	<script type="text/javascript">
+
+		$(document).ready(function(){
+			$('.page-link').on('click', function(e){
+				e.preventDefault();
+				var link = $(this).attr('href');
+				var page = $(this).attr('data-ci-pagination-page');
+				var color = [];
+				var category = [];
+				var dimension = [];
+
+				$.each($("input:checkbox[name='color']:checked"), function () {
+					color.push($(this).val());
+				});
+				$.each($("input:checkbox[name='category']:checked"), function () {
+
+					category.push($(this).val());
+				});
+				$("select[id^='dimension']").children('option:selected').each(function(){
+					if($(this).val()!=''){
+						dimension.push($(this).val());
+					}
+				});
+				var data =
+				{
+					color: color,
+					category: category,
+					dimension: dimension,
+				} 
+				$.ajax({
+					type: "post",
+					url: link,
+					// data: data,
+					success: function (response) { 
+						$('.postList').empty();
+						$('.postList').append(response.post);
+
+					}
+				});
+
+			});
+		});
+	</script> 

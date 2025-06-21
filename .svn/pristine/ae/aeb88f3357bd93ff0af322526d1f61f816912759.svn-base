@@ -1,0 +1,252 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/fileupload/bootstrap-fileupload.min.css')}">
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/sweetalert/lib/sweet-alert.css')}">
+
+
+{/block}
+{block name="body"}
+
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+            <div class="card-header border-light">
+                <h5>
+                    <i class="fas fa-plus-circle" ></i>
+                    {lang('add_image')}
+                </h5>
+
+                <div class="clearfix"></div> 
+            </div>
+            <div class="card-body">
+
+                {form_open_multipart('','id="file_form" name="file_form" class="form-login needs-validation" enctype="multipart/form-data" novalidate=""')}
+
+
+
+                <div class="col-md-6">
+                    <label class="form-label">{lang('image')}</label>                     
+                    <div class="fileupload fileupload-new " data-provides="fileupload">
+                        <div class="fileupload-preview thumbnail border" style="width: 200px; height: 150px;">
+                        </div>
+                        <div>
+                            <span class="btn btn-info me-1 mb-1 btn-file">
+                                <span class="fileupload-new">{lang('select_image')}</span>
+                                <span class="fileupload-exists">{lang('change')}</span>
+                                <input type="file" name="userfile">
+                            </span>
+                            <a href="#" class="btn btn-outline-dark me-1 mb-1 fileupload-exists" data-dismiss="fileupload">{lang('remove')}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3">
+                 <label class="form-label">{lang('type')}</label>
+                 <select class="form-select" name="type" required="">
+                    <option value="news_images">{lang('news')}</option>
+                    <option value="event_images">{lang('events')}</option>
+                    <option value="efile_images">{lang('add_image')}</option>
+                </select> 
+                {form_error("type")}
+            </div>
+            <div class="col-3">
+                <div class="form-group">
+                 <label class="form-label">{lang('sort_order')}</label>
+                 <div class="controls">
+                    <input class="form-control" type="number" id="sort_order" name="sort_order" value="" required>
+                    <div class="invalid-feedback">{lang('the_field_required')}</div>
+
+                    {form_error("sort_order")}
+                </div>
+            </div>
+        </div>
+
+        <br>
+
+        <div class="form-group">
+            <button class="btn btn-primary" type="submit" id="add_image" name="add_image" value="add_image">
+                {lang('add')} <i class="fa fa-arrow-circle-right"></i>
+            </button>
+        </div>
+        {form_close()}
+
+    </div>
+</div>
+<br>
+<div class="row "> 
+    <div class="col-sm-12"> 
+        <div class="card"> 
+
+            <div class="card-header">
+             <h5>
+                {lang('text_available_images')}
+            </h5>
+
+        </div>
+
+        <div class="card-content">
+            <div class="card-body">  
+
+                <div class="table-responsive">
+                    <table class="table color-table primary-table" id="exportTable">
+                        <thead >
+                            <tr>
+                                <th>#</th>
+                                <th>{lang('image')}</th>
+                                <th>{lang('type')}</th>
+                                <th>{lang('sort_order')}</th>  
+                                <th>{lang('action')}</th>  
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {foreach from=$details item=v}
+                            <tr>
+                                <td>{counter}</td>
+                                <td>
+                                    {if $v.type=="efile"}
+                                    <a href="{assets_url()}images/efile_images/{$v.file_name}" target="_blank"><img src="{assets_url()}images/efile_images/{$v.file_name}" class="img-thumbnail" width="50px"></a>
+                                    {elseif $v.type=="news"}
+                                    <a href="{assets_url()}images/news_images/{$v.file_name}" target="_blank"><img src="{assets_url()}images/news_images/{$v.file_name}" class="img-thumbnail" width="50px"></a>
+                                    {elseif $v.type=="event"}
+                                    <a href="{assets_url()}images/event_images/{$v.file_name}" target="_blank"><img src="{assets_url()}images/event_images/{$v.file_name}" class="img-thumbnail" width="50px"></a>
+                                    {/if}
+                                </td> 
+
+                                <td>{$v.type}</td>
+                                <td>{$v.sort_order}</td> 
+                                <td class="td-actions">
+                                    <a  href="javascript:inactivate({$v.id})" class="btn btn-info btn-round" data-placement="top" data-original-title="approve"><i class="fa fa-trash"></i></a></a>
+                                </td>
+
+                            </tr> 
+                            {/foreach}
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div> 
+</div> 
+</div>
+
+{/block}
+{block name="footer"}
+<script type="text/javascript">
+
+    var image_row = {$image_row};
+    function addImage() {
+
+        html = '<tr id="image-row' + image_row + '">';
+        html += '  <td class="text-left"><a href="" id="thumb-image' + image_row + '"data-toggle="image" class="img-thumbnail" style="height: 110px; max-width: 110px;"><img src="{$img_placeholder}" alt="" title="" data-placeholder="{$placeholder}" width="100px" height="100px" /></a><input type="hidden" name="product_image[' + image_row + '][image]" value="" id="input-image' + image_row + '" /></td>';
+        html += '  <td class="text-right"><input type="text" name="product_image[' + image_row + '][sort_order]" value="" placeholder="{$entry_sort_order}" class="form-control" /></td>';
+        html += '  <td class="text-left"><button type="button" onclick="$(\'#image-row' + image_row + '\').remove();" data-toggle="tooltip" title="{$button_remove}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+        html += '</tr>';
+
+        $('#images tbody').append(html);
+
+        image_row++;
+    }
+
+    $(document).on('click', 'a[data-toggle=\'image\']', function(e) {
+        //alert('45545454545');
+        var $element = $(this);
+        var $popover = $element.data('bs.popover'); // element has bs popover?
+
+        e.preventDefault();
+
+        // destroy all image popovers
+        $('a[data-toggle="image"]').popover('dispose');
+        //$('a[data-toggle="image"]').popover('destroy');
+
+        // remove flickering (do not re-add popover when clicking for removal)
+        if ($popover) {
+            return;
+        }
+
+        $element.popover({
+            html: true,
+            placement: 'right',
+            trigger: 'manual',
+            content: function() {
+                return '<button type="button" id="button-image" class="btn btn-primary"><i class="fas fa-plus-circles"></i></button> <button type="button" id="button-clear" class="btn btn-danger"><i class="fa fa-trash"></i></button>';
+            }
+        });
+
+        $element.popover('show');
+
+        $('#button-image').on('click', function() {
+            var $button = $(this);
+            var $icon   = $button.find('> i');
+            var $thumb = $element.attr('id');
+            var $target = $element.parent().find('input').attr('id');
+            $('#modal-image').remove();
+
+            $.ajax({
+                url: '{{base_url()}}admin/settings/get_image_gallery_ajax?target=' + $target + '&thumb=' + $thumb,
+                dataType: 'html',
+                beforeSend: function() {
+                    $button.prop('disabled', true);
+                    if ($icon.length) {
+                        $icon.attr('class', 'fa fa-circle-o-notch fa-spin');
+                    }
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
+
+                    if ($icon.length) {
+                        $icon.attr('class', 'fa fa-pencil');
+                    }
+                },
+                success: function(html) {
+                    console.log(html);
+                    $('body').append('<div id="modal-image" class="modal">' + html + '</div>');
+                    // $('#modal-image').modal('show');
+                    $('#modal-image').modal();
+                }
+            });
+
+            //$element.popover('destroy');
+            $element.popover('dispose');
+        });
+        $('#button-clear').on('click', function() {
+            $element.find('img').attr('src', '{{ img_placeholder }}');
+            $element.parent().find('input').val('');
+            $element.popover('dispose');
+        });
+    });             
+
+</script>
+<script type="text/javascript">
+    function inactivate(id)
+    {
+        swal({
+            title: 'Are you sure?',
+            text: 'Do you want to Delete',
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: 'Delete it',
+            cancelButtonText: 'Cancel Please',
+            closeOnConfirm: false,
+            closeOnCancel: false,
+        },
+         function (isConfirm) {
+            if (isConfirm) {
+                document.location.href = "delete-images/"+id; 
+            } else {
+                swal('Cancelled', 'Data Safe', "error");
+            }
+        });
+    }
+</script>
+<script src="{assets_url('plugins/sweetalert/lib/sweet-alert.min.js')}"></script>
+<!-- 
+<script src="{assets_url('plugins/ckeditor/ckeditor.js')}"></script>
+<script src="{assets_url('plugins/ckeditor/adapters/jquery.js')}"></script> -->
+<script src="{assets_url('plugins/fileupload/bootstrap-fileupload.min.js')}"></script>
+{* <script src="{assets_url('plugins/validation/js/jqBootstrapValidation.js')}"></script>
+<script src="{assets_url('plugins/validation/js/form-validation.js')}"></script> *}
+<!-- <script src="{assets_url()}backend/vendors/tinymce/tinymce.min.js"></script> -->
+
+{/block}

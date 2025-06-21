@@ -1,0 +1,172 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/sweetalert/lib/sweet-alert.css')}">
+{/block}
+{block name="body"} 
+<div style="display:none;">
+    <span id="base_url">{base_url()}</span>
+    <span id="text_are_you_sure">{lang('text_are_you_sure')}</span>
+    <span id="text_you_will_not_recover">{lang('text_you_will_not_recover')}</span>
+    <span id="text_yes_delete_it">{lang('text_yes_delete_it')}</span>
+    <span id="text_no_cancel_please">{lang('text_no_cancel_please')}</span>
+    <span id="text_deleted">{lang('text_deleted')}</span>
+    <span id="text_news_deleted">{lang('text_news_deleted')}</span>
+    <span id="text_cancelled">{lang('text_cancelled')}</span>
+    <span id="text_news_safe">{lang('text_news_safe')}</span>
+    <span id="text_you_want_edit_news">{lang('text_you_want_edit_news')}</span>
+    <span id="text_you_want_delete_news">{lang('text_you_want_delete_news')}</span>
+    <span id="text_yes_edit_it">{lang('text_yes_edit_it')}</span>
+    <span id="error_the_fieldid_field_is_required">{lang('error_the_fieldid_field_is_required')}</span>
+    <span id="error_atleast_number">{lang('error_atleast_number')}</span>
+    <span id="error_enter_greater_number">{lang('error_enter_greater_number')}</span>
+</div>
+
+<div class="heading-elements">
+ <a href="{base_url()}admin/tools/add-news/{$package_details['enc_id']}" class="btn btn-outline-theme mr-1 mb-1" title=""><i class="fa fa-plus"></i></a>
+</div>
+<div class="row">
+   <div class="col-sm-12"> 
+    <div class="card">
+        <div class="card-header">
+            <h5>
+             <i class="fa fa-bars" > 
+             </i>
+             {lang('text_available_news')}
+         </h5>
+
+         <div class="clearfix"></div> 
+     </div>
+     <div class="card-body">
+        {if count($news_details) > 0}
+        <div class="table-responsive">
+            <table class="table table-hover" id="sample-table-1">
+                <thead>
+                    <tr>
+                        <th class="center">#</th>
+                        <th>{lang('text_news_title')}</th>
+                        {* <th class="hidden-xs">{lang('text_news_description')}</th> *}
+                        <th>{lang('text_added_date')}</th>
+                        <th class="hidden-xs">{lang('attachment')}
+                        </th>
+                        <th>{lang('text_actions')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {foreach $news_details as $v} 
+                    {* {$i=$i+1} *}
+                    <tr>
+                        <td class="center">{counter}</td>
+                        <td>{$v.title}</td>
+                        {* <td>{$v.content|truncate:20} *}
+                        </td>
+                        <td>{$v.start_date}</td>
+                        <td class="hidden-xs"><img {if $v.image}src="{assets_url()}/images/news_images/{$v.image}"{else}src="{assets_url()}/images/profile/bg.jpg"{/if}
+                            width="75" height="75"></td>
+                            <td class="center">
+                                <div>
+
+                                    <a href="javascript:edit_news({$v.id})"  data-placement="top" title="{lang('text_edit')}"><i class="fas fa-edit"></i></a>
+
+                                    <a  href="javascript:inactivate_news({$v.id})"  data-placement="top" title="{lang('text_deactivate')}"><i class="fas fa-trash text-danger"></i></a>
+
+                                </div>
+                                   {*  <div class="visible-xs visible-sm hidden-md hidden-lg">
+                                        <div class="btn-group">
+                                            <a class="btn btn-green dropdown-toggle btn-sm" data-toggle="dropdown" href="#">
+                                                <i class="fa fa-cog"></i> <span class="caret"></span>
+                                            </a>
+                                            <ul role="menu" class="dropdown-menu pull-right dropdown-dark">
+                                                <li>
+                                                    <a role="menuitem" tabindex="-1" href="javascript:edit_news({$v.news_id})">
+                                                        <i class="fa fa-edit"></i> {lang('text_edit')}
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a role="menuitem" tabindex="-1" href="javascript:inactivate_news({$v.news_id})">
+                                                        <i class="fa fa-times"></i> {lang('text_deactivate')}
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div> *}
+                                </td>
+                            </tr>
+                            {/foreach}
+
+                        </tbody>
+                    </table>
+                    {else}
+                    <div class="alert alert-block">
+                        <p>
+                            <h4 class="text-center"> 
+                                <i class="fa fa-exclamation"> {lang('text_no_transfer_details_found')}</i>
+                            </h4>
+                        </p>
+                    </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="footer"}
+
+
+<script src="{assets_url('plugins/sweetalert/lib/sweet-alert.min.js')}"></script>
+<script src="{assets_url('js/confirm.js')}"></script>
+<script>
+
+    function edit_news(id)
+    {
+        swal({
+            title: $("#text_are_you_sure").html(),
+            text: $("#text_you_want_edit_news").html(),
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: $("#text_yes_edit_it").html(),
+            cancelButtonText: $("#text_no_cancel_please").html(),
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+        function (isConfirm) {
+            if (isConfirm) {
+                document.location.href = rootPath + "admin/tools/add_news/"+id; 
+            } else {
+                swal($("#text_cancelled").html(),$("#text_news_safe").html(), "error");
+            }
+        });
+
+    }
+    function inactivate_news(id)
+    {
+        swal({
+            title: $("#text_are_you_sure").html(),
+            text: $("#text_you_want_delete_news").html(),
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: $("#text_yes_delete_it").html(),
+            cancelButtonText: $("#text_no_cancel_please").html(),
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+        function (isConfirm) {
+            if (isConfirm) {
+                document.location.href = rootPath + "admin/tools/news_management/"+id; 
+            } else {
+                swal($("#text_cancelled").html(),$("#text_news_safe").html(), "error");
+            }
+        });
+
+    }
+
+
+</script>
+
+<script src="{assets_url('plugins/ckeditor/ckeditor.js')}"></script>
+<script src="{assets_url('plugins/ckeditor/adapters/jquery.js')}"></script>
+
+{/block}

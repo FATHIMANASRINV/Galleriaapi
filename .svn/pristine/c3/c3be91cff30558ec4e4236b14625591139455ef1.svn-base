@@ -1,0 +1,147 @@
+{extends file="layout/support/base.tpl"}
+{block name="body"} 
+<div class="row">
+	<div class="col-md-4">
+		<div class="card card-chart">
+			<div class="card-header" data-background-color="rose" data-header-animation="true">
+				<div class="ct-chart" id="totalTicketChart"></div>
+			</div>
+			<div class="card-content">
+				<div class="card-actions">
+					<button type="button" class="btn btn-danger btn-simple fix-broken-card">
+						<i class="material-icons">build</i> Fix Header!
+					</button>
+				</div>
+				<h4 class="card-title">{lang('text_total_tickets')}</h4>
+				<p class="category">{lang('text_monthly_comparison')}</p>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">access_time</i> {lang('text_year')} - <strong>{$smarty.now|date_format:'%Y'}</strong>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-4">
+		<div class="card card-chart">
+			<div class="card-header" data-background-color="green" data-header-animation="true">
+				<div class="ct-chart" id="openTicketChart"></div>
+			</div>
+			<div class="card-content">
+				<div class="card-actions">
+					<button type="button" class="btn btn-danger btn-simple fix-broken-card">
+						<i class="material-icons">build</i> Fix Header!
+					</button>
+				</div>
+				<h4 class="card-title">{lang('text_open_tickets')}</h4>
+				<p class="category">
+					{if $open_ticket_diff >= 0}
+					<span class="text-success"><i class="fa fa-long-arrow-up"></i> {$open_ticket_diff} </span> {lang('text_increases_last_day_comparison')}.
+					{else if $open_ticket_diff < 0}
+					<span class="text-danger"><i class="fa fa-long-arrow-down"></i> {$open_ticket_diff} </span> {lang('text_decreases_last_day_comparison')}.
+					{/if}					
+				</p>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">access_time</i> {lang('text_last_7_days')} - <strong>{$smarty.now|date_format:'%B'}</strong>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-4">
+		<div class="card card-chart">
+			<div class="card-header" data-background-color="blue" data-header-animation="true">
+				<div class="ct-chart" id="resolvedTicketChart"></div>
+			</div>
+			<div class="card-content">
+				<h4 class="card-title">{lang('text_resolved_tickets')}</h4>
+				
+				<p class="category">
+					{if $resolved_ticket_diff >= 0}
+					<span class="text-success"><i class="fa fa-long-arrow-up"></i> {$resolved_ticket_diff} </span> {lang('text_increases_last_day_comparison')}.
+					{else if $resolved_ticket_diff < 0}
+					<span class="text-danger"><i class="fa fa-long-arrow-down"></i> {$resolved_ticket_diff} </span> {lang('text_decreases_last_day_comparison')}.
+					{/if}
+				</p>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">access_time</i> {lang('text_last_7_days')} - <strong>{$smarty.now|date_format:'%B'}</strong>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="row">
+	<div class="col-lg-3 col-md-6 col-sm-6">
+		<div class="card card-stats">
+			<div class="card-header" data-background-color="orange">
+				<i class="material-icons">weekend</i>
+			</div>
+			<div class="card-content">
+				<p class="category">{lang('text_reopen')}</p>
+				<h3 class="card-title">{$reopen_count}</h3>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">date_range</i> {lang('last_24_hours')}
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-3 col-md-6 col-sm-6">
+		<div class="card card-stats">
+			<div class="card-header" data-background-color="rose">
+				<i class="material-icons">equalizer</i>
+			</div>
+			<div class="card-content">
+				<p class="category">{lang('text_closed')}</p>
+				<h3 class="card-title">{$closed_count}</h3>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">date_range</i> {lang('last_24_hours')}
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-3 col-md-6 col-sm-6">
+		<div class="card card-stats">
+			<div class="card-header" data-background-color="blue">
+				<i class="material-icons">store</i>
+			</div>
+			<div class="card-content">
+				<p class="category">{lang('text_emergency')}</p>
+				<h3 class="card-title">{$emergency_count}</h3>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">date_range</i> {lang('last_24_hours')}
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-3 col-md-6 col-sm-6">
+		<div class="card card-stats">
+			<div class="card-header" data-background-color="green">
+				<i class="material-icons">store</i>
+			</div>
+			<div class="card-content">
+				<p class="category">{lang('text_high_priority')}</p>
+				<h3 class="card-title">{$high_count}</h3>
+			</div>
+			<div class="card-footer">
+				<div class="stats">
+					<i class="material-icons">date_range</i> {lang('last_24_hours')}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{/block}
+{block name="footer"} 
+<script src="{assets_url('support/js/chartist.min.js')}"></script>
+{include file="{log_user_type()}/support/chart.tpl"}
+{/block}
+ 

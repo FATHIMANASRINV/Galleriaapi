@@ -1,0 +1,540 @@
+
+<div class="modal-header">
+    <h4 class="modal-title" id="myLargeModalLabel">{lang('Edit_Product')}</h4>
+    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+{form_open_multipart('','id="edit-form" class="needs-validation" novalidate="" ')}
+<div class="modal-body">
+    <input type="hidden" name="id" id="id" required value="{$details['id']}">
+    <input type="hidden" name="submit" value="update">
+
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="pill" href="#tab-general"><i class="icofont icofont-ui-home"></i> {lang('General')}</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link dimension" data-bs-toggle="pill" href="#tab-data"><i class="icofont icofont-list"></i>{lang('Data')}</a>
+        </li> 
+        <li class="nav-item">
+            {* <a class="nav-link"  data-bs-toggle="pill" href="#tab-lang" ><i class="icofont icofont-billboard"></i>{lang('Language')}</a> *}
+        </li> 
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-images"><i class="icofont icofont-image"></i> {lang('image')}</a>
+        </li> 
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#additional-images"><i class="icofont icofont-image"></i>{lang('New_Images')}</a>
+        </li> 
+    </ul> 
+    <div class="tab-content m-t-30">
+        <div class="tab-pane active" id="tab-general">
+            <div class="form-group mb-3">
+                <div class="col-sm-12">
+                    <input class="form-control product_name" type="text" name="product_name" id="product_name" placeholder="{lang('Product_Name')}" required autocomplete="off" value="{$details['product_name']}">
+
+                </div>
+            </div>
+            <div class="form-group mb-3">
+                <div class="col-sm-12">
+                    <input class="form-control product_code" type="text" name="product_code" id="product_code" placeholder="{lang('product_code')}" required autocomplete="off" value="{$details['product_code']}">
+                </div>
+            </div>
+            {* <div class="form-group mb-3">
+
+                <div class="col-sm-12">
+                    <textarea class="ckeditor description" name="description" id="description" placeholder="{lang('Description')}" cols="30" rows="10">{$details['description']}</textarea>
+                </div>
+            </div> *}
+
+            <div class="form-group mb-3">
+                <div class="col-sm-12">
+
+                    <textarea class="form-control "  name="description"id="description" id="validationTextarea"
+                    placeholder="Description" required="">{$details['description']}</textarea>
+
+                    <div class="invalid-feedback">
+                        {lang('field_required')}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group mb-3">
+                <div class="col-sm-12">
+                    <input class="form-control sort_order" type="number" placeholder="{lang('Sort_Order')}" name="sort_order" id="sort_order" required autocomplete="off" value="{$details['sort_order']}">
+                </div>
+            </div> 
+            <div class="form-group mb-3"> 
+
+                <select class="category_asyncs col-sm-12  " required name="category_id" id="category_id1">
+                    {* {foreach $category_ids as $cat} *}
+                    <option value="{$details['category_id']}" selected>{$details['category_name']}</option>
+                    {* {/foreach} *}
+                </select> 
+            </div> 
+
+          {*   <div class="form-group mb-3"> 
+                <select class="brand_asyncs col-sm-12" required name="brand" >
+                    <option value="{$details['brand']}" selected>{$details['brand_name']}</option>
+                </select> 
+            </div>
+
+ *}
+            <div class="form-group mb-3">
+                <div class="col-sm-12">
+                    <input class="form-control price" type="text" name="price" id="price" placeholder="{lang('Product_price')}" required autocomplete="off" value="{$details['price']}">
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <div class="col-sm-12">
+                    <input class="form-control strike_price"  type="text" name="strike_price" id="strike_price" placeholder="{lang('Strike_price')}" autocomplete="off" value="{$details['strike_price']}">
+                 {*  <select class="offer_asyncs col-sm-12" name="offer_percentage" >
+                    <option value="{$details['offer_percentage']}" selected>{$details['offer_percentage_amt']}</option>
+                </select>  *}
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <div class="col-sm-12">
+                <input class="form-control shipping_charge" type="text" name="shipping_charge" id="shipping_charge" placeholder="{lang('Shipping_Charge')}" autocomplete="off" value="{$details['shipping_charge']}">
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <div class="col-sm-12">
+                <input class="form-control quantity" type="text" name="quantity" id="quantity" placeholder="{lang('Quantity')}" required autocomplete="off" value="{$details['quantity']}">
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <div class="col-sm-12">
+                <input class="form-control slug_url" type="text" name="slug_url" id="slug_url" placeholder="{lang('Slug_url')}" required autocomplete="off" value="{$details['slug_url']}">
+            </div>
+        </div>
+       {*  <div class="form-group mb-3">
+            <div class="col-sm-12">
+                <input class="form-control video_url" type="text" placeholder="{lang('Video_URL')}" name="video_url" id="video_url" autocomplete="off" value="{$details['video_url']}">
+            </div>
+        </div> 
+        <div class="form-group mb-3">
+            <div class="col-sm-12">
+                <textarea class="form-control" type="text" id="provider_info"placeholder="{lang('provider_info')}" name="provider_info"  autocomplete="off">{$details['provider_info']}</textarea>
+                <div class="invalid-feedback">
+                    {lang('field_required')}
+                </div>
+            </div>
+        </div>    *}
+    </div>
+
+    <div class="tab-pane " id="tab-data">
+        <div class="form-group mb-3"> 
+
+            <div class="card-body p-20 animate-chk b-light">
+                <div class="row">
+                    <label>{lang('Color')}</label>
+                    <div class="row">
+                        {foreach $color as $v}
+                        <div class="col-sm-2">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="color_id[{$v.id}]" id="edit_color_id_{$v.id}" value="{$v.id}"  {if in_array($v.id,$details['color_ids'])}checked{/if}>
+                                <label class="form-check-label" for="edit_color_id_{$v.id}"><span class="badge digits" style="background-color:{$v.color_code}">{$v.name}</span></label>
+                            </div>
+                        </div>
+                        {/foreach} 
+                    </div>
+                </div>
+            </div> 
+        </div>
+        <div class="form-group mb-3">
+            <div class="card-body animate-chk b-light">
+                <div class="row">
+                    <label>{lang('Size')}</label>
+                    <div class="row dimension_data ">
+                        {foreach $dimensions as $v}
+
+                        <div class="col-sm-3 change_dimension">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="dimension_id[{$v.id}]" id="edit_dimension_id[{$v.id}]" value="{$v.id}"  {if in_array($v.id,$details['dimension_id1'])}checked{/if}>
+                                <label class="form-check-label" for="edit_dimension_id[{$v.id}]">{$v.name}</label>
+                            </div>
+                        </div>
+
+                        {/foreach} 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="tab-pane " id="tab-lang"> 
+
+        <div class="form-group mb-3">
+            
+        </div>
+    </div>
+    {form_close()}
+    <div class="tab-pane fade" id="tab-images">
+        <label class="form-label">{lang('Default_Image')}</label>                     
+        <div class="fileupload fileupload-new " data-provides="fileupload">
+            <div class="fileupload-preview thumbnail border">
+                <img src="{assets_url('images/products/')}{$details['image']}" alt="">
+            </div>
+            <div>
+                <span class="btn btn-secondary btn-file" >
+                    <span class="fileupload-new">{lang('change')}</span>
+                    <span class="fileupload-exists">{lang('change')}</span>
+                    <input type="file" name="default_image" id='product_image'>
+                </span>
+                <a href="#" class="btn btn-outline-dark me-1 mb-1 fileupload-exists" data-dismiss="fileupload">{lang('remove')}</a>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="col-sm-12">
+                <div class="row">
+                    {foreach $details['product_images'] as $key=>$images }
+                    <div class="col-sm-3">
+                        <div class="col-sm-3">
+                            <div class="img-thumbnail image-rem">
+                                <embed src="{assets_url('images/products')}/{$images['image']}" width="100" height="100" /><div class='upload__imgs-close' id="{$images.id}">
+                                    {* <input  type="text" name="img_id"id="img_id" value="{$images.id}" hidden> *}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/foreach}
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer"> 
+            <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+            <button class="btn btn-info btn-air-primary update-product" type="submit" name="edit" id="edit" value="Submit" >{lang('text_update')}</button>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="additional-images">
+        {form_open_multipart('','id="image-edit-form" class="needs-validation" novalidate="" ')}
+        <div class="addD-forms">
+        </div>
+        <input type="hidden" name="submit" value="update" >
+        <input type="hidden" class="product_id_img"  name="product_id_img" value="{$details['id']}">
+        <div id="imageUploads" class="dropzone"></div>
+        <div class="modal-footer"> 
+
+            <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+            <button class="btn btn-primary btn-air-primary edit-image-footer" type="submit" name="images" value="Submit" >{lang('Add_Images')}</button>
+        </div>
+        {form_close()}           
+
+    </div>
+</div> 
+</div>
+
+</div>
+</div>
+
+<script type="text/javascript">
+    $('#pills-editTab').on('click', 'a', function(e) {
+        e.preventDefault();
+        $(this).tab("show");
+        dataId = $(this).attr('area-controls');
+        console.log(dataId);
+    })
+    // var descriptionEdit;
+    // var editor = ClassicEditor
+    // .create( document.querySelector( '.specifications' ) )
+    // .then( editor => {
+    //     window.editor = editor;
+    //     descriptionEdit = editor;
+
+    // } )
+    // .catch( error => {
+    //     console.error( error );
+    // } );
+
+
+    $('.category_asyncs').change( function(){ 
+        $('.dimension_asyncs').val(null).trigger('change'); 
+    });
+
+    $('.category_asyncs').select2({
+
+        placeholder: 'Select a Category',
+        dropdownParent: $('.category_asyncs').parent(),
+        // multiple:true,
+        ajax: {
+            url:'{base_url()}{log_user_type()}/autocomplete/product_categories',
+
+            type: 'post',
+            dataType: 'json',
+            delay:250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            }
+        },
+    }); 
+
+    // $('.brand_asyncs').select2({
+
+    //     placeholder: 'Select a Brand',
+    //     dropdownParent: $('.brand_asyncs').parent(),
+    //     ajax: {
+    //         url:'{base_url()}{log_user_type()}/autocomplete/product_brand',
+
+    //         type: 'post',
+    //         dataType: 'json',
+    //         delay:250,
+    //         processResults: function(data) {
+    //             return {
+    //                 results: data
+    //             };
+    //         }
+    //     },
+    // }); 
+    // $('.offer_asyncs').select2({
+
+    //     placeholder: 'Select a Offer Percentage',
+    //     dropdownParent: $('.offer_asyncs').parent(),
+    //     ajax: {
+    //         url:'{base_url()}{log_user_type()}/autocomplete/product_offer',
+
+    //         type: 'post',
+    //         dataType: 'json',
+    //         delay:250,
+    //         processResults: function(data) {
+    //             return {
+    //                 results: data
+    //             };
+    //         }
+    //     },
+    // }); 
+
+
+    // $('.color_asyncs').select2({
+
+    //     placeholder: 'Select a Color',
+    //     dropdownParent: $('.color_asyncs').parent(),
+    //     ajax: {
+    //         url:'{base_url()}{log_user_type()}/autocomplete/colors',
+
+    //         type: 'post',
+    //         dataType: 'json',
+    //         delay:250,
+    //         processResults: function(data) {
+    //             return {
+    //                 results: data
+    //             };
+    //         }
+    //     },
+    // });
+
+    // $('.dimension_asyncs').select2({
+
+    //     placeholder: 'Select a Dimension',
+    //     dropdownParent: $('.dimension_asyncs').parent(),
+    //     ajax: {
+    //         url:'{base_url()}{log_user_type()}/autocomplete/dimensions',
+    //         data: function (params) {
+
+    //             var searchString = $( "select.category_asyncs option:checked" ).val() ;
+
+    //             var query = {
+    //                 search: searchString,
+    //                 type: 'public',
+    //                 term:params.term
+    //             }
+    //             return query;
+    //         },
+    //         type: 'post',
+    //         dataType: 'json',
+    //         delay:250,
+    //         processResults: function(data) {
+    //             return {
+    //                 results: data
+    //             };
+    //         }
+    //     },
+    // }); 
+
+
+    // $.each(document.querySelectorAll( '.ckedit1' ) , function(key , element){
+    //     // console.log($(element).attr('class'))
+    //     var val = $(element).data('code')
+    //     console.log(val)
+    //     var descriptionEdit;
+    //     var editor = ClassicEditor
+    //     .create( document.querySelector( '#lang1_'+val ),{
+    //         language: val
+    //     })
+    //     .then( editor => {
+    //         window.editor = editor;
+    //         descriptionEdit = editor;
+
+    //     } )
+    //     .catch( error => {
+    //         console.error( error );
+    //     } );
+
+
+    // })
+
+    // $(document).ready(function(){ 
+
+    $('body').on('click', '.dimension', function() {
+      var val=[];
+      var cat_sel = $("#category_id1").find('option:selected');
+      cat_sel.each(function(){
+          val.push($(this).val());
+      });
+      var dimension={json_encode($details['dimension_id1'])}
+      if(val.length!=0){
+          $.post( "{base_url()}admin/inventory/get_dimensions", { category_id: val})
+          .done(function( response ) { 
+
+            if(response.success){ 
+
+
+                var content ='';
+                var checked ='';
+                $(response.data).each(function(key, value) {
+                    if(dimension.includes(value.id)){
+                        checked = "checked";
+                    } else {
+                        checked = "";
+                    }
+
+
+                        // alert(cat1);
+                    content +='<div class="col-sm-3">';
+                    content +='<div class="form-check mb-3">';
+                    content +='<input class="form-check-input" type="checkbox" name="dimension_id['+value.id+']" id="dimension_id_'+value.id+'" value="'+value.id+'" '+checked+'>';
+                    content +='<label class="form-check-label" for="dimension_id_'+value.id+'">'+value.name+'</label>';
+                    content +='</div>';
+                    content +=' </div>';
+
+
+                });
+
+
+                console.log(content);
+                $(".dimension_data").empty();
+                $(".dimension_data").append(content);
+                $(".change_dimension").hide();
+
+
+
+            }
+
+        });
+      }
+      else{
+       $(".dimension_data").empty();
+   }
+   val.remove();
+});
+    // });
+
+    // var descriptionEdit;
+    // var editor = ClassicEditor
+    // .create( document.querySelector( '.ckeditor' ) )
+    // .then( editor => {
+    //     window.editor = editor;
+    //     descriptionEdit = editor;
+
+    // } )
+    // .catch( error => {
+    //     console.error( error );
+    // } );
+
+
+
+</script>
+<script type="text/javascript">
+
+
+    $('body').on('click', ".upload__imgs-close", function (e) {
+        var files = $(this).attr('id');
+        var $parentDiv = $(this).closest(".image-rem");
+        $.ajax({
+            type:'POST',
+            url:'{base_url("admin/inventory/Removeproduct")}',
+            data: { delete: files } ,
+            dataType:'json',
+        })
+        .done(function( response ) { 
+            if(response.status){
+                $parentDiv.remove(); 
+            }else{
+                toastr.error(response.msg, "Failed: ",{ progressBar:!0 })
+
+
+            }
+        })
+    });
+</script>
+<script type="text/javascript">
+ Dropzone.autoDiscover = false;
+
+ myDropzone = new Dropzone('div#imageUploads', {
+  addRemoveLinks: true,
+  autoProcessQueue: false,
+  uploadMultiple: true,
+  parallelUploads: 100,
+  maxFiles: 1000,
+  paramName: 'file',
+  clickable: true,
+  url: "{base_url()}admin/inventory/save-image",
+
+  init: function () {
+    var myDropzone = this;
+    $('.edit-image-footer').click(function (e) {
+      e.preventDefault();
+      myDropzone.processQueue();
+      return false;
+  });
+
+    this.on('sending', function (file, xhr, formData) {
+      var data =  $('#image-edit-form').serializeArray();
+      $.each(data, function (key, el) {
+        formData.append(el.name, el.value);
+    });
+      console.log(formData);
+
+  });
+},
+error: function (file, response){
+    if ($.type(response) === "string")
+      var message = response;
+  else
+      var message = response.message;
+  file.previewElement.classList.add("dz-error");
+  _ref = file.previewElement.querySelectorAll("[data-dz-errormessage]");
+  _results = [];
+  for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      node = _ref[_i];
+      _results.push(node.textContent = message);
+  }
+  return _results;
+},
+successmultiple: function (file, response) {
+    console.log(file, response);
+    detailed_table.ajax.reload(null, false );
+    var errorElement = '<div class="alert alert-success outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-check"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    $("#image-edit-form").prepend( errorElement );
+    setTimeout(function(){
+        $('#modal-product-edit').modal('hide')
+    }, 500);
+},
+completemultiple: function (file, response) {
+    console.log(file, response, "completemultiple");
+        //$modal.modal("show");
+},
+reset: function () {
+
+    var files = $('.product_id_img').val();
+        // console.log("resetFiles");
+    console.log(files);
+
+        // this.removeAllFiles(true);
+
+}
+});
+</script>

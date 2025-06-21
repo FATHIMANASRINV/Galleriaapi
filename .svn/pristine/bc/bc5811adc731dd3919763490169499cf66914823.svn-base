@@ -1,0 +1,225 @@
+  {extends file="layout/base.tpl"}
+{block name="header"}
+
+{/block}
+{block name="body"}
+
+  <div class="row">
+    <div class="col-12">
+        <div class="card dashboard-table mt-0">
+            <div class="card-body table-responsive-sm">
+                <div class="top-sec">
+                    <h3>My Orders</h3>
+                </div>
+                <div class="table-responsive-xl">
+                    <table class="table cart-table order-table" id="cart_table">
+                        <thead>
+                            <tr class="table-head">
+
+                                <th scope="col">Order Id</th>
+
+                                <th scope="col">Date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {if !empty($order_details)}
+                            {foreach from=$order_details item=od}
+                            <tr>
+
+                                <td>
+                                    <span class="mt-0">{$od.order_id}</span>
+                                </td>
+
+                                <td>
+                                    <span class="fs-6">{$od.order_date|date_format:"%Y-%m-%d"}</span>
+                                </td>
+                                <td>
+                                    {if $od.status == "Pending"}
+                                    <span
+                                    class="badge rounded-pill bg-warning custom-badge">{$od.status}</span>
+                                    {elseif $od.status== "Delivered"}
+                                    <span
+                                    class="badge rounded-pill bg-success custom-badge">{$od.status}</span>
+                                    {elseif $od.status== "Dispatched"}
+                                    <span
+                                    class="badge rounded-pill bg-secondary custom-badge">{$od.status}</span>
+                                    {elseif $od.status== "Processing"}
+                                    <span
+                                    class="badge rounded-pill bg-primary custom-badge">{$od.status}</span>
+                                    {elseif $od.status== "Shipped"}
+                                    <span
+                                    class="badge rounded-pill bg-primary custom-badge">{$od.status}</span>
+                                    {elseif $od.status== "Return Request"}
+                                    <span
+                                    class="badge rounded-pill bg-success custom-badge">Return Requested</span>
+                                    {elseif $od.status == "Cancelled"}
+                                    <span
+                                    class="badge rounded-pill bg-danger custom-badge">{$od.status}</span>
+                                     {elseif $od.status == "Return"}
+                                    <span
+                                    class="badge rounded-pill bg-secondary custom-badge">Return Processing</span>
+                                    {elseif $od.status == "Return Rejected"}
+                                    <span
+                                    class="badge rounded-pill bg-danger custom-badge">{$od.status}</span>
+                                    {elseif $od.status == "Return Accepted"}
+                                    <span
+                                    class="badge rounded-pill bg-success custom-badge">{$od.status}</span>
+                                    {else}
+                                    <span
+                                    class="badge rounded-pill bg-secondary custom-badge">{$od.status}</span>
+                                    {/if}
+                                </td>
+                                <td>
+                                    <span class="theme-color fs-6">{cur_format($od.final_amount)} </span>
+                                </td>
+                                <td>
+                                    <a href="{base_url('order-success/')}{$enc_user_id}/{$od.enc_id}" target="_blank">
+                                        <i class="fa fa-eye text-theme"></i>
+                                    </a>
+                                    <br>
+
+                                    {if ($od.status != "Cancelled") && ($od.status!= "Return Request") && ($od.today < $od.return_date) && ($od.status !="Return") && ($od.status!='Return Accepted') && ($od.status!="Return Rejected")}
+                                    <a class="change_order_btn" type="button" data-bs-toggle="modal"  data-bs-target="#change_order_status" data-offer-id="{$od.order_id}" data-order-status="{$od.status}">
+                                        <i class="fa fa-edit"></i>
+                                    </a> 
+
+                                    
+                                    {elseif $od.status == 'Pending'}
+                                    <a class="change_order_btn" type="button" data-bs-toggle="modal"  data-bs-target="#change_order_status" data-offer-id="{$od.order_id}" data-order-status="{$od.status}">
+                                        <i class="fa fa-edit"></i>
+                                    </a> 
+                                    {/if}
+
+                                </td>
+                            </tr>
+                            {/foreach}
+
+                            {/if}
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" id="change_order_status" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myLargeModalLabel">{lang('Change Order Status')}</h4>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            {form_open_multipart('','id="edit-order" class="needs-validation" novalidate=""')}
+            <div class="modal-body">
+                <input type="hidden" id="order_id" name="order_id" value="">
+                <input type="hidden" id="K_id" name="order_id" value="">
+                <input type="hidden" id="O_status" name="O_status" value="">
+                <input type="hidden" id="current_status" name="current_status" value="">
+                <div class="form-group">
+                    <label class="col-form-label" for="recipient-name">{lang('Select Status')}</label>
+                    <select name="order_status" id="order_status" class="form-control">
+                        <option value="" selected=""></option>
+                    </select>
+                </div>
+
+
+                <div class="form-group" id="return_reason_field" style="display: none;">
+                    <label for="return_reason">Reason</label>
+                    <input type="text" id="return_reason" name="return_reason" class="form-control" value="{set_value('return_reason')}" required>
+                </div>
+                {form_error('return_reason')}
+            </div>
+
+            <div class="modal-footer"> 
+                <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+                <input type="button" name="update" id="update"  class="btn btn-primary change_order"value="{lang('update')}">
+            </div>
+            {form_close()}         
+        </div>
+    </div> 
+</div> 
+{* success
+danger
+secon *}
+
+{/block}
+{block name="footer"}
+<script type="text/javascript">
+
+    $(document).on("click", ".change_order", function(event) {
+        var id = $('#K_id').val();
+        var STATUS = $('#order_status').val();
+    var reason = $('#return_reason').val(); // Get the return reason from the input field
+
+    // Create a data object with the id, status, and reason
+    var data = { id: id, status: STATUS, reason: reason };
+
+    $.ajax({
+        type: 'POST',
+        url: "{base_url('user/inventory/cancel-product')}",
+        data: data, // Send the data object
+        dataType: 'json',
+    }).done(function(response) {
+        toastr.success(response.msg, "Success:", { progressBar: true });
+
+        setTimeout(function() {
+            $('#change_order_status').modal('hide');
+        }, 100);
+
+        setTimeout(function() {
+            location.reload();
+        }, 100);
+    });
+});
+
+
+</script>
+
+<script type="text/javascript">
+    $('.change_order_btn').on('click', function () {
+        var id = $(this).data('offer-id');
+        var order_status = $(this).attr('data-order-status');
+
+        if (order_status === 'Delivered') {
+            $('#order_status').empty();
+            $('#order_status').append($('<option>', {
+                value: 'Return',
+                text: 'Return',
+                selected: true
+            }));
+
+        // Show the "Return Reason" input field
+            $('#return_reason_field').show();
+        } else {
+            $('#order_status').empty();
+            $('#order_status').append($('<option>', {
+                value: 'Cancelled',
+                text: 'Cancel'
+            }));
+
+        // Hide the "Return Reason" input field for other status options
+            $('#return_reason_field').show();
+        }
+
+        $('#K_id').val(id);
+        $('#O_status').val(order_status);
+    });
+
+
+    function validateNumericInput(inputElement) {
+        inputElement.value = inputElement.value.replace(/[^0-9]/g, ''); 
+    }
+
+    function validateAlphabeticInput(inputElement) {
+        inputElement.value = inputElement.value.replace(/[^a-zA-Z]/g, '');
+    }
+
+
+</script>
+{/block}

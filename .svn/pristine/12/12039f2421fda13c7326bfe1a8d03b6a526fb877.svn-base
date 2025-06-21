@@ -1,0 +1,313 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/datepicker/css/metallic/zebra_datepicker.min.css')}">
+
+<link href="{assets_url()}plugins/DataTables/datatables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/DataTables/DataTables-1.12.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/select2/select2.min.css" rel="stylesheet" />
+
+{/block}
+
+
+{block name="body"}
+
+<div class="row "> 
+  <div class="col-sm-12"> 
+
+    {form_open('','')}
+    <div class="form-body">
+      <div class="row">
+
+        <div class="col-sm-4">
+          <div class="form-group">
+            <label for="order_status" class="control-label">{lang('Order Status')}</label>
+            <select name="order_status" id="order_status" class="form-control">
+              <option value="all" selected {set_select('order_status', 'all')}>{lang('all')}</option>
+
+              <option value="pending" {set_select('order_status', 'Pending')}>{lang('Pending')}</option>
+
+              <option value="processing" {set_select('order_status', 'processing')}>{lang('processing')}</option>
+
+              <option value="delivered" {set_select('order_status', 'delivered')} >{lang('delivered')}</option>
+
+              <option value="shipped" {set_select('order_status', 'shipped')} >{lang('shipped')}</option>
+              <option value="dispatched" {set_select('order_status', 'dispatched')} >{lang('dispatched')}</option>
+
+
+            </select>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="form-group">
+
+            <label for="from_date">{lang('From Date')}</label>
+            <div class="col-10">
+              <input class="form-control" type="date"  id="from_date" name="from_date" value="{$post_arr['from_date']}">
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="form-group">
+
+            <label for="end_date">{lang('End Date')}</label>
+            <div class="col-10">
+              <input class="form-control" type="date" id="end_date" name="end_date" value="{$post_arr['end_date']}">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <br>
+          <button type="submit" class="btn btn-primary" name="submit" value="search">
+            <i class="fa fa-filter"></i> {lang('filter')}
+          </button>
+          <button type="submit" class="btn btn-warning mr-1" name="reset" value="reset">
+            <i class="fas fa-redo"></i>  {lang('reset')}
+          </button> 
+        </div>
+      </div>
+    </div>
+    {form_close()}
+  </div>
+
+  
+</div><br>
+
+<div class="row "> 
+  <div class="col-sm-12"> 
+    <div class="card"> 
+
+      <div class="card-header">
+        <h5>{$title}</h5>
+        
+      </div>
+
+      <div class="card-content">
+        <div class="card-body">  
+
+          <div class="table-responsive">
+            <table class="table color-table primary-table" id="exportTable">
+              <thead >
+                <tr>
+                  <th>#</th>
+                  <th>{lang('Order Id')}</th>
+                 {*  <th>{lang('username')}</th>
+                 <th>{lang('fullname')}</th> *}
+                 <th>{lang('Date')}</th>
+                 <th>{lang('Status')}</th>
+                 <th>{lang('amount')}</th>
+                 <th>{lang('Invoice')}</th>
+                 {* <th>{lang('Edit Order')}</th> *}
+               </tr>
+             </thead>
+           </table>
+
+         </div>
+       </div>
+     </div>
+   </div> 
+ </div> 
+</div>
+
+
+<div class="modal fade bd-example-modal-lg" id="change_order_status" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myLargeModalLabel">{lang('Change Order Status')}</h4>
+        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      {form_open_multipart('','id="edit-order" class="needs-validation" novalidate=""')}
+      <div class="modal-body">
+        <input type="hidden" id="order_id" name="order_id" value="">
+        <input type="hidden" id="K_id" name="order_id" value="">
+        <input type="hidden" id="O_status" name="O_status" value="">
+        <input type="hidden" id="current_status" name="current_status" value="">
+        <div class="form-group">
+          <label class="col-form-label" for="recipient-name">{lang('Select Status')}</label>
+          <select name="order_status" id="order_status" class="form-control">
+            <option value="" selected=""></option>
+          </select>
+        </div>
+
+
+        <div class="form-group" id="return_reason_field" style="display: none;">
+          <label for="return_reason">Reason</label>
+          <input type="text" id="return_reason" name="return_reason" class="form-control" value="{set_value('return_reason')}" required>
+        </div>
+        {form_error('return_reason')}
+      </div>
+
+      <div class="modal-footer"> 
+        <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+        <input type="button" name="update" id="update"  class="btn btn-primary change_order"value="{lang('update')}">
+      </div>
+      {form_close()}         
+    </div>
+  </div> 
+</div> 
+
+{/block}
+
+{block name="footer"}
+
+<script src="{assets_url()}plugins/DataTables/datatables.min.js"></script>
+<script src="{assets_url('plugins/DataTables/media/js/jquery.dataTables.min.js')}"></script>
+<script src="{assets_url()}plugins/select2/select2.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/dataTables.buttons.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/jszip.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/pdfmake.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/vfs_fonts.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/buttons.html5.min.js"></script>
+<script src="{assets_url()}plugins/DataTables/DataTables-1.12.1/js/buttons.print.min.js"></script>
+
+
+<script type="text/javascript">
+
+  $('#from_date').Zebra_DatePicker({
+    pair: $('.to_date')
+  });
+  $('#end_date').Zebra_DatePicker();
+
+</script>
+
+
+<script type="text/javascript">
+  $(document).ready(function(){
+    var order = $('#exportTable').DataTable({
+      dom: 'Bfrtip',
+      lengthMenu: [
+        [10, 50, 100,200,500,1000, {$count}],
+        [10, 50, 100,200,500,1000, 'All'],
+        ],
+      buttons: [
+        'pageLength', 'copy', 'csv', 'pdf', 'print',{
+          extend: 'excelHtml5',
+          title: 'Transaction',
+          customizeData: function(data) {
+            for(var i = 0; i < data.body.length; i++) {
+              for(var j = 0; j < data.body[i].length; j++) {
+                data.body[i][j] = '\u200C' + data.body[i][j];
+              }
+            }
+          },      
+          orientation: 'landscape'
+        }],
+
+      'processing': true,
+      'serverSide': true,
+      "autoWidth": false,
+      'serverMethod': 'post', 
+      "pagingType": "full_numbers",
+      "pageLength": 10,
+      "sortable": true,
+      "pagingType": "full_numbers",
+
+      "aaSorting": [],
+      "order": [],
+      "aoColumnDefs": [
+        { "bSortable": false, "aTargets": [ 0, 1, 2, 3, 4, 5 ,6, 7, 8 
+          ] },
+        ],
+
+      "columnDefs": [{
+        "targets": 'no-sort',
+        "orderable": false,
+        "order": [],
+      }],
+
+      'ajax': {
+        'url':'{base_url()}user/inventory/order_details_ajax',
+        "type": "POST",
+        "data" : {
+
+          'start_date' : '{$from_date}',
+          'end_date' : '{$end_date}',
+          'order_status' : '{$order_status}',
+
+        }
+
+      },
+
+      'columns': [
+
+
+        { data: 'index'},
+        { data: 'order_id'},
+        // { data: 'user_name' },
+        // { data: 'full_name'},
+        { data: 'date'},
+        { data: 'status'},
+        { data: 'final_amount'},
+        { data: 'encrypt_id', mRender: function(data, type, row) {
+          var html =  '<a href = "{base_url()}{log_user_type()}/inventory/order-invoice/'+row.encrypt_id+'" class="btn btn-light" data-placement="top" data-original-title = "Invoice" target=" "><i class="fa fa-print fa fa-white" aria-hidden="true"></i></a>' ;
+          return html;
+        }},
+        // { data: 'status', mRender: function(data, type, row) {
+        //   var html =  '<a class="btn btn-success btn-xs change_order_status"  data-order-id="'+row.order_id+'"><i class="fa fa-edit"></i></a>' ;
+        //   return html;
+        // }},
+        ],
+      success: function(response) { 
+      } 
+    });  
+    table.buttons().container()
+    .appendTo( '#exportTable_wrapper .col-md-6:eq(0)' );
+  }); 
+</script>
+
+
+
+<script type="text/javascript">
+
+  jQuery(document).ready(function() {
+
+    $('.change_order_status').on('click', function(){
+
+      alert("123");
+
+      // var id = $(this).attr('data-order-id');
+      //       //console.log(id);
+      // $("#order_id").val(id);
+
+      $('#change_order_status').modal('show');
+    });
+  });
+</script>
+
+{* <script type="text/javascript">
+
+    $(document).on("click", ".change_order_status", function(event) {
+        var id = $('#K_id').val();
+        var STATUS = $('#order_status').val();
+    var reason = $('#return_reason').val(); // Get the return reason from the input field
+
+    // Create a data object with the id, status, and reason
+    var data = { id: id, status: STATUS, reason: reason };
+
+    $.ajax({
+        type: 'POST',
+        url: "{base_url('user/inventory/cancel-product')}",
+        data: data, // Send the data object
+        dataType: 'json',
+    }).done(function(response) {
+        toastr.success(response.msg, "Success:", { progressBar: true });
+
+        setTimeout(function() {
+            $('#change_order_status').modal('hide');
+        }, 100);
+
+        setTimeout(function() {
+            location.reload();
+        }, 100);
+    });
+});
+
+
+</script> *}
+
+
+{/block}

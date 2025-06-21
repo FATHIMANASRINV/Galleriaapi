@@ -1,0 +1,1438 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Inventory extends Base_Controller {
+
+	function __construct()
+	{
+		parent::__construct(); 	
+		$this->load->model( "Calculation_model" );
+	}
+	function category_management($id=''){
+		$data['title'] = "Manage Category" ;
+		$this->loadView($data);
+
+	}
+
+	function product_management($product_id = ''){
+
+		$data['color']=$this->Inventory_model->getColorDetails();
+		if($product_id)
+		{
+			$product_single_details = $this->Inventory_model->getProductDetails($product_id);
+			$product_single_details = element('0',$product_single_details);
+			$data['req_product']=$product_single_details;
+		}
+		$data['req_id'] = $product_id;
+		$data['title'] = "Manage Products";
+		$this->loadView($data);
+	}
+
+
+
+	function order_management($order_status = 'all'){
+		
+		$post_arr = [];
+		$post_arr['order_status'] = $order_status;
+		if($this->input->post('submit')) {	
+
+			$post_arr = $this->input->post();
+
+
+
+
+
+			if (element('user_name',$post_arr)) {
+
+				$post_arr['user_name']=$this->Base_model->getUserName($post_arr['user_name']);
+				
+			}
+
+			if (element('full_user',$post_arr)) {
+
+				$post_arr['full_user']=$this->Base_model->getFullName($post_arr['full_user']);
+
+				// print_r($post_arr);
+				// die();
+				
+			}
+
+			$post_arr['order_status'] = $order_status;
+
+		//	print_r($post_arr['order_status']);die();
+		// die();
+
+		}
+		// print_r($post_arr);die();
+		$data['order_status'] = $order_status ;
+		$data['post_arr'] = $post_arr ;
+		$data['title'] = "Manage Products" ;
+		$this->loadView($data);
+
+	}
+
+	public function order_management_ajax() {
+		if ($this->input->is_ajax_request()) {
+			$draw = $this->input->post('draw');
+			$post_arr = $this->input->post();
+			// print_r($post_arr);die();
+			$count_without_filter = $this->Inventory_model->getOrderDetailsajaxCount($post_arr['order_status']);
+			$count_with_filter = $this->Inventory_model->getOrderDetailsAjax($post_arr, 1);
+			$result_data = $this->Inventory_model->getOrderDetailsAjax($post_arr);
+			// print_r($result_data);
+			// die();
+			$response = array(
+				"draw" => intval($draw),
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $result_data,
+			);
+
+			echo json_encode($response);
+		}
+	}
+
+	function update_order_status() {
+
+		if($this->input->post('update')) {
+
+			$post = $this->input->post();
+			$order_id = $post['order_id'];
+			$order_status = $post['order_status'];
+			$current_status = $post['current_status'];
+			$res = $this->Inventory_model->updateOrderStatusAdmin($order_id, $order_status);
+
+			if($res) {
+				$msg = "Order Updated Successfully";
+				$this->redirect($msg, 'inventory/order-management/'.$current_status, TRUE);
+			}else {
+				$msg = "Something Went Wrong";
+				$this->redirect($msg, 'inventory/order-management/'.$current_status, FALSE);
+			}
+		}
+		
+		$this->redirect('', 'inventory/order-management', FALSE);
+	}
+
+	function update_order_proof() {
+
+		if($this->input->post('update')) {
+			$file_name = NULL;
+			$post = $this->input->post();
+
+			$order_id = $post['order'];
+
+			if($_FILES['image1']['error']!=4)
+			{
+				$upload_path = './assets/uploads/payment_proof/';
+				$config['upload_path'] = './assets/uploads/payment_proof/';
+				$config['allowed_types'] = 'jpg|png|jpeg|webp';
+				$config['max_size'] = '200000';
+				$config['max_height'] = '200000';
+				$config['max_width'] = '200000';
+				$config['remove_spaces'] = true;
+				$config['overwrite'] = false; 
+				$config['encrypt_name'] = true;
+
+				$this->load->library('upload', $config);
+				$msg = '';
+				if($this->upload->do_upload('image1')){
+
+					$uploaded = $this->upload->data();  
+					$file_name1 = $uploaded['file_name'];	
+
+				} else { 
+
+					$msg = "IMG-1". $this->upload->display_errors();
+					
+					$this->redirect($msg, 'inventory/order-management', false); 
+
+				}
+
+
+
+			}else {
+				$msg = 'Please select images';
+				$this->redirect($msg, 'inventory/order-management', false);
+			}
+			$post_arr['image1']=$file_name1;
+			$res = $this->Inventory_model->updateOrderProof($order_id,$post_arr['image1'],$post['comment']);
+
+			if($res) {
+
+				$msg = "Delivery Proof Uploaded Successfully";
+				$this->redirect($msg, 'inventory/order-management', TRUE);
+			}else {
+				$msg = "Something Went Wrong";
+				$this->redirect($msg, 'inventory/order-management', FALSE);
+			}
+		}
+
+		$this->redirect('', 'inventory/order-management', FALSE);
+	}
+
+
+	function order_invoice($id=''){
+
+		if($id)
+		{
+			$order_id = $this->Base_model->encrypt_decrypt('decrypt', $id);
+			
+		}
+
+		else{
+			$msg = lang('text_invalid_user_name');
+			$this->redirect($msg, 'inventory/order-history', FALSE);
+		}
+
+		$full_order_details = $this->Inventory_model->getOrderInfo($order_id);
+		
+		$order_details=element(0,$full_order_details);
+		// print_r($order_details);
+		// die();
+
+		
+		if($order_details){
+
+			// $user_details['user_name'] = $this->Base_model->IdToUserName($order_details['user_id']);
+			$user_details['full_name'] = $this->Base_model->getFullName($order_details['customer_id']);
+
+			$country_id = $this->Base_model->getUserInfoField('country',$order_details['customer_id']);
+			
+			$user_details['country_name'] = $this->Zone_model->IdToCountryName($country_id);
+			$state_id = $this->Base_model->getUserInfoField('state',$order_details['customer_id']);
+			$user_details['state_name'] = $this->Zone_model->IdToStateName($state_id);
+			$user_details['address'] = $this->Base_model->getUserInfoField('address',$order_details['customer_id']);
+			$user_details['zip_code'] = $this->Base_model->getUserInfoField('zip_code',$order_details['customer_id']);
+			$user_details['mobile'] = $this->Base_model->getUserInfoField('mobile',$order_details['customer_id']);
+			$user_details['email'] = $this->Base_model->getUserInfoField('email',$order_details['customer_id']);
+
+			// print_r($user_details);
+			// die();
+
+
+
+			$data['order_user_details']=$user_details;
+		}else{
+			$msg = lang('text_invalid_user_name');
+			$this->redirect($msg, 'inventory/order-history', FALSE);
+		}
+
+		$data['order_details']=$order_details;
+		$data['full_order_details']=$full_order_details;
+		
+
+		$user_id = log_user_id();
+		$data['title']='Order invoice';
+		$this->loadView($data);
+
+	}
+
+
+
+
+	
+
+
+	function get_dimensions() {
+		$details=array();
+		if($this->input->is_ajax_request()){
+			$post = $this->input->post();
+			$category=$post['category_id'];
+			$details = $this->Inventory_model->getdimensionDetails($category);
+			$response['success'] = TRUE;
+			$response['data'] = $details;
+			$this->output
+			->set_status_header(200)
+			->set_content_type('application/json', 'utf-8')
+			->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+			->_display();
+			exit();
+
+
+
+		}
+	}
+	public function get_products_dataTable() {
+		if ($this->input->is_ajax_request()) {
+			$draw = $this->input->post('draw');
+			$post_arr = $this->input->post();
+
+			$count_without_filter = $this->Inventory_model->getProductCount();
+			$count_with_filter = $this->Inventory_model->getProductDetailsAjax($post_arr, 1);
+			$details = $this->Inventory_model->getProductDetailsAjax( $post_arr,'');
+			// print_r($details);
+			// echo $this->db->last_query();
+			// die();
+			$response = array(
+				"draw" => intval($draw),
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $details,
+			);
+
+			echo json_encode($response);
+		} 
+	}
+	function get_product_info() {
+		if ($this->input->is_ajax_request()) { 
+			$this->form_validation->set_rules('id', lang('Category_Id'), 'trim|required');
+
+			if($this->form_validation->run()){ 
+				$post_arr = $this->input->post(); 
+				$data['details'] = $this->Base_model->getProductInfo( $post_arr['id'] );
+				// $data['category_ids']=$this->Inventory_model->getCategoryIds($data['details']['id']);
+				// $cat_ids=array();
+				// foreach($data['category_ids'] as $cat_id){
+				// 	$cat_ids[]=$cat_id['category_id'];
+				// }
+				// $data['cat_ids']=$cat_ids;
+				// print_r($data['category_ids']);die();
+				$data['color']=$this->Inventory_model->getColorDetails();
+				$data['dimensions']=$this->Inventory_model->getdimensionDetails($data['details']['category_id']);
+				$response['success'] = TRUE; 
+				$response['html'] = 
+				$this->smarty->view("admin/inventory/edit_product.tpl", $data, TRUE);
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+
+
+	function save_product( ){
+		$lang_arr=$this->Base_model->getLanguageDetails();
+		if($this->input->is_ajax_request()){
+			$response = [
+				'success' => FALSE,
+				'msg' => '',
+				'error' => []
+			]; 
+			if($this->input->post('submit') == 'add'){
+				$this->form_validation->set_rules('product_name', lang('Product_Name'), 'trim|required|callback_alpha_dash_space',array('alpha_dash_space' => 'This Field Only Allowed Alphebets,white space and Numbers'));
+			}
+			else
+			{
+				$this->form_validation->set_rules('product_name', lang('Product_Name'), 'trim|required|callback_alpha_dash_space',array('alpha_dash_space' => 'This Field Only Allowed Alphebets,white space and Numbers'));
+			}
+
+			$this->form_validation->set_rules('product_code', "Product Code", 'trim|callback_check_databases|required');  	
+			$this->form_validation->set_message('check_databases', lang('product_unique'));
+			$this->form_validation->set_rules('sort_order', lang('Sort_Order'), 'trim|required|numeric');
+			
+			
+			if(empty(element('color_id',$this->input->post()))){				
+				$this->form_validation->set_rules('color_id','Color', 'trim|required', array(
+					'is_exist' => "Color not exist"
+				));
+			}
+			$this->form_validation->set_rules('dimension_id[]','Dimension', 'trim|required', array(
+			));
+			$this->form_validation->set_rules('price', lang('Price'), 'trim|required|greater_than[0]');  
+			$this->form_validation->set_rules('shipping_charge', lang('Shipping_Charge'), 'trim|required');  
+			$this->form_validation->set_rules('description', lang('description'), 'trim|required');  
+
+			$this->form_validation->set_rules('quantity',lang('Quantity'), 'trim|required|numeric');  
+
+
+			if($this->input->post('submit') == 'update'){ 
+				$this->form_validation->set_rules('id', lang('Product_Id'), 'trim|required|is_exist[product_details.id]', array(
+					'is_exist' => lang('Product_is_not_exist')
+				));
+			}
+			if($this->form_validation->run()){ 
+
+				$details = $this->input->post();
+				$details['dimension_id'] = implode(',',$details['dimension_id']);
+				$details['color_id'] = implode(',',$details['color_id']);
+
+				$details['dimension_code'] = $this->Inventory_model->getDimensionCode($details['dimension_id']);
+
+
+				$details['color_code'] = $this->Inventory_model->getColorCode($details['color_id']);
+
+
+				if($this->input->post('submit') == 'add'){ 
+
+					$details['slug_url'] = url_title($details['product_code'], '-', true);
+					$result = $this->Inventory_model->insertProductDetails($details);
+					$this->load->model('Inventory_model');
+					
+					if($result){
+						$response = [
+							'success' => TRUE,
+							'msg' => lang('Product_details_added_successfully'),
+							'product_id' => $result,
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Failed_Please_try_again'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+
+				}else if($this->input->post('submit') == 'update'){
+					if($_FILES['default_image']['error']!=4)
+					{
+						$config['upload_path'] = './assets/images/products/';
+						$config['allowed_types'] = 'jpg|png|jpeg';
+						$config['max_size'] = '2000000';
+						$config['remove_spaces'] = true;
+						$config['overwrite'] = false;
+
+						$this->load->library('upload', $config);
+						if ($this->upload->do_upload('default_image')) {
+							$details['image'] = $this->upload->data('file_name');
+						} else {
+							$response = [
+								'success' => FALSE,
+								'msg' => $this->upload->display_errors(),
+							];
+
+							$this->output
+							->set_status_header(200)
+							->set_content_type('application/json', 'utf-8')
+							->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+							->_display();
+							exit();
+						}
+					}
+
+					  
+					$details['slug_url'] = url_title($details['product_code'], '-', true);
+					
+					$result = $this->Inventory_model->updateProductDetails($details);
+
+
+					if($result){
+						$response = [
+							'success' => TRUE,
+							'msg' => lang('Successfully_updated_the_Product'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_updating'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+				}else {
+					$response = [
+						'success' => FALSE,
+						'msg' => lang('Invalid_Operation'),
+					];
+
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}
+
+			}else{
+				$response = [
+					'success' => FALSE,
+					'msg' => lang('Check_the_fields'),
+					'errors' => $this->form_validation->error_array(),
+				];
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		}
+	}
+	function alpha_dash_space($str){
+		if (! preg_match('/^[a-zA-Z\s0-9]+$/', $str)) {
+			return FALSE;
+		} else {
+			return TRUE;
+		}
+	}
+	function check_databases() 
+	{
+		$flag = false; 
+		$details = $this->input->post(); 
+		$product_code = $details['product_code'];
+		if ($this->input->post('submit') == 'add' ){
+			$product_id = NULL;
+		}else{
+			$product_id = $details['id'];
+		}
+
+		$count = $this->Inventory_model->ProductCodeExist($product_id,$product_code);
+		// echo $this->input->post('submit');
+		// die();
+		if($count == 0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+
+
+	}
+
+	function save_category( ){
+		if($this->input->is_ajax_request()){
+
+			$response = [
+				'success' => FALSE,
+				'msg' => '',
+				'error' => []
+			]; 
+
+			$this->form_validation->set_rules('category_name', lang('Category_Name'), 'trim|required');
+			$this->form_validation->set_rules('main_item_code',lang('Main_Item_Code'), 'trim|required');
+			$this->form_validation->set_rules('sort_order', lang('Sort_Order'), 'trim|required|numeric|greater_than[0]');
+			$this->form_validation->set_rules('description', lang('Description'), 'trim|required');
+
+			if($this->input->post('submit') == 'update'){ 
+				$this->form_validation->set_rules('id', lang('Category_Id'), 'trim|required|is_exist[category.id]', array(
+					'is_exist' => lang('Category_is_not_exist')
+				));
+			}
+			if($this->input->post('sub_category')=='on')
+			{
+				$this->form_validation->set_rules('category', lang('Sub_category'), 'trim|required');
+
+			}
+
+			if($this->form_validation->run()){ 
+
+				$details = $this->input->post();
+
+				if($_FILES['userfile']['error']!=4)
+				{
+					$config['upload_path'] = './assets/images/category/';
+					$config['allowed_types'] = 'jpg|png|jpeg';
+					$config['max_size'] = '2000000';
+					$config['remove_spaces'] = true;
+					$config['overwrite'] = false;
+					$this->load->library('upload', $config);
+					if ($this->upload->do_upload()) {
+						$details['image'] = $this->upload->data('file_name');
+					} else {
+						$response = [
+							'success' => FALSE,
+							'msg' => $this->upload->display_errors(),
+						];
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					}
+				}
+
+				if($this->input->post('submit') == 'add'){ 
+					$details['slug_url'] = url_title($details['category_name'], '-', true);
+					$ins = $this->Inventory_model->insertCategory($details);
+					if($ins){
+						$response = [
+							'success' => TRUE,
+							'msg' => lang('Successfully_added_the_category'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_adding'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+
+				}else if($this->input->post('submit') == 'update'){
+					if(!element('sub_category',$details))
+					{
+						$details['category']=0;
+					}
+					$details['slug_url'] = url_title($details['category_name'], '-', true);
+					$result = $this->Inventory_model->updateCategory($details);
+					if($result){
+						$response = [
+							'success' => TRUE,
+							'msg' => lang('Successfully_updated_the_category'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_updating'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+				}else {
+					$response = [
+						'success' => FALSE,
+						'msg' => lang('Invalid_Operation'),
+					];
+
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}
+
+			}else{
+				$response = [
+					'success' => FALSE,
+					'msg' => lang('Check_the_fields'),
+					'errors' => $this->form_validation->error_array(),
+				];
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		}
+	}
+	public function get_categories_details() {
+		if ($this->input->is_ajax_request()) {
+			$draw = $this->input->post('draw');
+			$post_arr = $this->input->post();
+
+			$count_without_filter = $this->Inventory_model->getCategoryCount();
+			$count_with_filter = $this->Inventory_model->getCategoryDetailsAjax($post_arr, 1);
+			$details = $this->Inventory_model->getCategoryDetailsAjax( $post_arr,'');
+			$response = array(
+				"draw" => intval($draw),
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $details,
+			);
+
+			echo json_encode($response);
+		} 
+	}
+
+	function get_category_info() {
+		if ($this->input->is_ajax_request()) { 
+			$this->form_validation->set_rules('id', lang('Category_Id'), 'trim|required');
+
+			if($this->form_validation->run()){ 
+				$post_arr = $this->input->post(); 
+				$data['details'] = $this->Base_model->getCategoryInfo( $post_arr['id'] );
+				// print_r($data['details']);die();
+				$response['success'] = TRUE; 
+				$response['html'] = 
+				$this->smarty->view("admin/inventory/edit_category.tpl", $data, TRUE);
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+	function insert_status() {
+		if ($this->input->is_ajax_request()) { 
+			if($this->input->post()){ 
+				
+				$post_arr = $this->input->post(); 
+				// print_r($post_arr);die();
+				$post_arr['id'] = $this->Base_model->encrypt_decrypt('decrypt',$post_arr['id']);
+				$data['details'] = $this->Inventory_model->updatestatus($post_arr);
+				$response['success'] = TRUE; 
+				$response['msg'] = 'Status Changes Successsfully'; 
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+
+	function color_management(){
+		$data['title'] = lang("Color_Management") ;
+		$this->loadView($data);
+	}
+
+	public function get_color_details() {
+		if ($this->input->is_ajax_request()) {
+			$draw = $this->input->post('draw');
+			$post_arr = $this->input->post();
+			
+			$count_without_filter = $this->Inventory_model->getColorCount();
+			$count_with_filter = $this->Inventory_model->getColorDetailsAjax($post_arr, 1);
+			$details = $this->Inventory_model->getColorDetailsAjax( $post_arr,'');
+			// print_r($details);die();
+			$response = array(
+				"draw" => intval($draw),
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $details,
+			);
+
+			echo json_encode($response);
+		} 
+	}
+
+	function save_color( ){
+		if($this->input->is_ajax_request()){
+
+			$response = [
+				'success' => FALSE,
+				'msg' => '',
+				'error' => []
+			]; 
+			$this->form_validation->set_rules('name', lang('color_name'), 'trim|required');
+			$this->form_validation->set_rules('color_code', 'color', 'trim|required');
+			$this->form_validation->set_rules('code', lang('Code'), 'trim|required');
+			if($this->form_validation->run()){ 
+
+				$details = $this->input->post();
+				
+				
+
+				if($this->input->post('submit') == 'add'){ 
+					$ins = $this->Inventory_model->insertColor($details);
+					if($ins){
+						$response = [
+							'success' => TRUE,
+							'msg' => lang('Successfully_added_the_color'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_adding'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+
+				}else if($this->input->post('submit') == 'update'){
+					$result = $this->Inventory_model->updateColor($details);
+					if($result){
+						$response = [
+							'success' => TRUE,
+							'msg' => lang('Successfully_updated_the_color'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_updating'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+				}else {
+					$response = [
+						'success' => FALSE,
+						'msg' => lang('Invalid_Operation'),
+					];
+
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}
+
+			}else{
+				$response = [
+					'success' => FALSE,
+					'msg' =>implode(', ', $this->form_validation->error_array()),
+					'error' => $this->form_validation->error_array(),
+				];
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		}
+	}
+
+	function get_color_info() {
+		if ($this->input->is_ajax_request()) { 
+			$this->form_validation->set_rules('id', lang('color_Id'), 'trim|required');
+			if($this->form_validation->run()){ 
+				$post_arr = $this->input->post(); 
+				$data['details'] = $this->getColorInfo( $post_arr['id'] );
+				$response['success'] = TRUE; 
+				$response['html'] = 
+				$this->smarty->view("admin/inventory/edit_color.tpl", $data, TRUE);
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+	public function getColorInfo($id, $encrypted = TRUE)
+	{
+		if( $encrypted ){
+			$id = $this->Base_model->encrypt_decrypt('decrypt',$id);
+		}
+
+		$details=[];
+		$this->db->select('*');
+		$this->db->from('colors');
+		$this->db->where('id',$id);
+		
+		$this->db->limit(1);
+		$res=$this->db->get();
+		foreach ($res->result_array() as $row) {
+			// $row['category_name']=$this->Base_model->getCategoryName($row['category']);
+			$details = $row;
+		}
+		return $details;
+	}
+	function change_color_status() {
+		if ($this->input->is_ajax_request()) { 
+			if($this->input->post()){ 
+				$this->load->config('ssl');
+				if($this->config->item('demo_mode'))
+				{ 
+					$response = [
+						'success' => FALSE,
+						'msg' => lang('site_under_maintenance'),
+					];
+
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit(); 
+				} 
+				$post_arr = $this->input->post(); 
+				$post_arr['id'] = $this->Base_model->encrypt_decrypt('decrypt',$post_arr['id']);
+				$data['details'] = $this->Inventory_model->updateColorstatus($post_arr);
+				$response['success'] = TRUE; 
+				$response['msg'] = 'Status Changes Successsfully'; 
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+
+	function dimensions($id=''){
+		$search_arr = [];
+		if ($id) {
+			$search_arr['id'] = $id;
+		}
+
+		$search_arr['order_by'] = 'id';
+
+		$data['title'] = "Dimensions" ;
+		$data['req_id'] = $id ;
+		$data['search_arr'] = $search_arr ;
+		$this->loadView($data);
+	}
+
+	function get_dimensions_info() {
+		if ($this->input->is_ajax_request()) { 
+			$this->form_validation->set_rules('id', lang('Category_Id'), 'trim|required');
+
+			if($this->form_validation->run()){ 
+				$post_arr = $this->input->post(); 
+				$data['details'] = $this->Base_model->getDimensionsInfo( $post_arr['id'] );
+				$data['curr_arr']=$this->currency->currencies;
+				$response['success'] = TRUE; 
+				$response['html'] = 
+				$this->smarty->view("admin/inventory/edit_dimensions.tpl", $data, TRUE);
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+
+
+	function save_dimensions(){
+		$curr_arr=$this->currency->currencies;
+		if($this->input->is_ajax_request()){
+
+			$details = $this->input->post();
+
+			$response = [
+				'success' => FALSE,
+				'msg' => '',
+				'error' => []
+			]; 
+
+			// $this->form_validation->set_rules('name', "Name", 'trim|required');
+			$this->form_validation->set_rules('code', "Code", 'trim|required');
+
+			$this->form_validation->set_rules('category_id',"Category", 'trim|required|is_exist[category.id]');
+
+			$this->form_validation->set_rules('status',"Status", 'trim|required|in_list[yes,no]');
+			$this->form_validation->set_rules('sort_order',"Sort Order", 'trim|required|numeric');
+			
+			if($this->input->post('submit') == 'update'){ 
+				$this->form_validation->set_rules('id', "Dimension", 'trim|required|is_exist[dimensions.id]', array(
+					'is_exist' => "Dimension is not exist"
+				));
+			}
+
+			if($this->form_validation->run()){ 
+
+				$details = $this->input->post();
+				if($this->input->post('submit') == 'add'){ 
+					$ins = $this->Inventory_model->insertDimension($details);
+					//
+					if($ins){
+						$response = [
+							'success' => TRUE,
+							'msg' =>" Successfully added the dimension",
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_adding'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+
+				}else if($this->input->post('submit') == 'update'){
+					if(!element('sub_category',$details))
+					{
+						$details['category']=0;
+					}
+					$result = $this->Inventory_model->updateDimension($details);
+					if($result){
+						$response = [
+							'success' => TRUE,
+							'msg' => "Successfully updated the dimension",
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					} else{
+						$response = [
+							'success' => FALSE,
+							'msg' => lang('Error_On_updating'),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit(); 
+					}
+				}else {
+					$response = [
+						'success' => FALSE,
+						'msg' => lang('Invalid_Operation'),
+					];
+
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}
+
+			}else{
+				$response = [
+					'success' => FALSE,
+					'msg' => implode(', ', $this->form_validation->error_array()),
+					'error' => $this->form_validation->error_array(),
+				];
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		}
+	}
+
+	public function get_dimensions_details() {
+		if ($this->input->is_ajax_request()) {
+			$draw = $this->input->post('draw');
+			$post_arr = $this->input->post();
+			
+			$count_without_filter = $this->Inventory_model->getDimensionCount();
+			$count_with_filter = $this->Inventory_model->getDimensionDetailsAjax($post_arr, 1);
+			$details = $this->Inventory_model->getDimensionDetailsAjax( $post_arr,'');
+			$response = array(
+				"draw" => intval($draw),
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $details,
+			);
+
+			echo json_encode($response);
+		} 
+	}
+
+	function insert_dimensions() {
+		if ($this->input->is_ajax_request()) { 
+			if($this->input->post()){ 
+				$post_arr = $this->input->post(); 
+				$post_arr['id'] = $this->Base_model->encrypt_decrypt('decrypt',$post_arr['id']);
+				$data['details'] = $this->Inventory_model->updateDimensionstatus($post_arr);
+				$response['success'] = TRUE; 
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+	function change_status() {
+		if ($this->input->is_ajax_request()) { 
+			$this->load->config('ssl');
+			if($this->config->item('demo_mode'))
+			{ 
+				$response = [
+					'success' => FALSE,
+					'msg' => lang('site_under_maintenance'),
+				];
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit(); 
+			} 
+			if($this->input->post()){ 
+				$post_arr = $this->input->post(); 
+				$post_arr['id'] = $this->Base_model->encrypt_decrypt('decrypt',$post_arr['id']);
+				$data['details'] = $this->Inventory_model->ChangeProductstatus($post_arr);
+				$response['success'] = TRUE; 
+				$response['msg'] = 'Status Changes Successsfully'; 
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		} 
+	}
+	function save_image(){
+		if($this->input->is_ajax_request()){
+			$product_id_img=$this->input->post('product_id_img');
+			$type=$this->input->post('submit');
+			$images=array();
+			$number_of_files_uploaded = count($_FILES['file']['name']);
+			if($_FILES['file']['name'][0]!=''){
+				for ($i = 0; $i <  $number_of_files_uploaded; $i++) {
+					$_FILES['userfile']['name']     = $_FILES['file']['name'][$i];
+					$_FILES['userfile']['type']     = $_FILES['file']['type'][$i];
+					$_FILES['userfile']['tmp_name'] = $_FILES['file']['tmp_name'][$i];
+					$_FILES['userfile']['error']    = $_FILES['file']['error'][$i];
+					$_FILES['userfile']['size']     = $_FILES['file']['size'][$i];
+
+					$config['upload_path'] = './assets/images/products/';
+					$config['allowed_types'] = 'jpg|png|jpeg';
+					$config['max_size'] = '2000000';
+					$config['remove_spaces'] = true;
+					$config['overwrite'] = false;
+					$this->load->library('upload', $config);
+					if ($this->upload->do_upload()) {
+						$images[] = $this->upload->data('file_name');
+					} else {
+						$response = [
+							'success' => FALSE,
+							'msg' => $this->upload->display_errors(),
+						];
+
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					}
+				}
+				if($type=='add'){
+					$details['image']=array_shift($images);
+					$default_img=$this->Inventory_model->updateDefaultImage($product_id_img,$details['image']);
+				}
+				$additional_img = $images; 
+				if($additional_img){
+					$additional_img_insert = $this->Inventory_model->insertAdditionalImages($product_id_img,$additional_img);
+					$response['msg'] = 'Image Added Successfuly';
+					$response['status'] = TRUE;
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+
+				}
+			}else{
+				$response['msg'] = 'Please Add Image To Upload';
+				$response['status'] = TRUE;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+
+		}
+
+
+	}
+	public function Removeproduct()
+	{
+
+		if($this->input->post('delete'))
+		{
+
+			$id = $this->input->post('delete');
+			$delete = $this->Inventory_model->RemoveproductImage($id);
+
+			if($delete)
+			{
+				$response['msg'] = 'Image Removed';
+				$response['status'] = TRUE;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+			else{
+				$response['success'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+		}
+	}
+
+
+	public function deleteColorManagement()
+	{
+		$id=$this->input->post('id');
+		//print_r($id);die();
+		 $dec_id = $this->Base_model->encrypt_decrypt( 'decrypt' ,$id);
+		// print_r($dec_id);die();
+			$delete = $this->Inventory_model->deleteColor($dec_id);
+
+
+			if($delete)
+			{
+				$response['msg'] = 'Removed';
+				$response['status'] = TRUE;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+			else{
+				$response['status'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+		
+	}
+
+public function deleteProductManagement()
+	{
+		$id=$this->input->post('id');
+		//print_r($id);die();
+		 $dec_id = $this->Base_model->encrypt_decrypt( 'decrypt' ,$id);
+		// print_r($dec_id);die();
+			$delete = $this->Inventory_model->deleteProduct($dec_id);
+
+
+			if($delete)
+			{
+				$response['msg'] = 'Removed';
+				$response['status'] = TRUE;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+			else{
+				$response['status'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+		
+	}
+
+
+public function deleteDimensions()
+	{
+		$id=$this->input->post('id');
+		//print_r($id);die();
+		 $dec_id = $this->Base_model->encrypt_decrypt( 'decrypt' ,$id);
+		// print_r($dec_id);die();
+			$delete = $this->Inventory_model->deleteDimensionList($dec_id);
+
+
+			if($delete)
+			{
+				$response['msg'] = 'Removed';
+				$response['status'] = TRUE;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+			else{
+				$response['status'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+		
+	}
+
+	
+public function deleteCategoryManagement()
+	{
+		$id=$this->input->post('id');
+		//print_r($id);die();
+		 $dec_id = $this->Base_model->encrypt_decrypt( 'decrypt' ,$id);
+		// print_r($dec_id);die();
+			$delete = $this->Inventory_model->deleteCategory($dec_id);
+
+
+			if($delete)
+			{
+				$response['msg'] = 'Removed';
+				$response['status'] = TRUE;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+			else{
+				$response['status'] = FALSE;  
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+		
+	}
+
+
+
+}

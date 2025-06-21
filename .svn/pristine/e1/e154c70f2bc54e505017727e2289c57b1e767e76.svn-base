@@ -1,0 +1,72 @@
+
+<div class="tab-pane fade show active" id="home" role="tabpanel">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">{lang('text_description_about_ticket')}</h4>
+            <p class="category">
+             {lang('text_more_info')} 
+         </p>
+     </div>
+     <div class="card-content">                       
+        <div class="table-responsive col-xs-6 margin-bottom-15">
+            <table class="table table-hover">
+                <tbody>
+                    <tr>
+                        <td><strong>{lang('text_status')}</strong></td>
+                        <td class="text-center">{$ticket_arr['status_name']}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>{lang('text_priority')}</strong></td>
+                        <td class="text-center">{$ticket_arr['priority_name']}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>{lang('text_subject')}</strong></td>
+                        <td class="text-center">{$ticket_arr['subject']}</td>
+                    </tr>
+                    {if $ticket_arr['img']}
+                    <tr>
+                        <td><strong>{lang('text_image')}</strong></td>
+                        <td class="text-center"><img src="{assets_url()}uploads/efiles/{$ticket_arr.img}"style="width:70px;height:70px"><br><a href ="{assets_url()}uploads/efiles/{$ticket_arr.img}"target="_blank" class="text-primary">View image</a></td>
+                    </tr>
+                    {/if}
+
+                </tbody>
+            </table>
+        </div>          
+        <div class="table-responsive col-xs-6 margin-bottom-15">
+            <table class="table table-hover">
+                <tbody>
+                    <tr>
+                        <td><strong>{lang('text_created')}</strong></td>
+                        <td class="text-center">{$ticket_arr['created_date']|date_format:"%b  %d, %Y  %H:%M  %p"}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>{lang('text_last_activity')}</strong></td>
+                        <td class="text-center">{$ticket_arr['last_updated']|date_format:"%b  %d, %Y  %H:%M  %p"}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+</div>
+</div>
+
+<div class="col-sm-3 pt-3">
+    <div class="pull-left">
+      <div>
+
+            <label name="Change Status">Change Status</label>
+        <select class="form-control" id="media" name="media" title={$ticket_id}>
+            <option value="">Status</option>
+            {foreach from=$status_arr item=statuses}
+            <option value="{$statuses.id}">{$statuses.name}</option>
+
+
+            {/foreach}
+        </select>
+
+    </div>
+
+</div>
+</div>

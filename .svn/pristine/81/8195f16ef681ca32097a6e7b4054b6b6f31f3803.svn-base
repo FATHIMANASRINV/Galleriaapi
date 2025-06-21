@@ -1,0 +1,274 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+<link rel="stylesheet" href="{assets_url()}backend/libs/quill/quill.snow.css">
+<link rel="stylesheet" href="{assets_url()}backend/libs/quill/quill.bubble.css">
+
+<style type="text/css">
+    .mobile {
+      display: none;
+}
+@media (max-width: 360px) {
+  .mobile {
+    display: block;
+  }
+}
+</style>
+{/block}
+{block name="body"} 
+
+{if $news_id}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header border-light">
+                <h5 class="mb-0">
+                    <i class="far fa-edit" ></i>
+                    {lang('text_edit_news')}
+                </h5>
+                <div class="clearfix"></div> 
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    {foreach $news_id_details as $k} 
+                    {form_open_multipart('','id="news_update_form" name="news_update_form" class="form-login needs-validation" novalidate=""')}
+                    <div class="form-group">
+                        <label class="form-label">
+                            {lang('text_news_title')}
+                        </label>
+                        <div class="controls">
+                            <input type="hidden" value="{$k.id}" id="news_id" name="id"  >
+                            <textarea class="form-control" id="news_title" name="title" required autocomplete="off">{$k.title}</textarea>
+                            <div class="invalid-feedback">{lang('the_field_required')}</div>
+
+                            {form_error("news_title")}
+                        </div>
+                    </div>
+
+                  
+
+
+
+                  
+                   <div class="form-group">
+                   <label class="form-label" >{lang('text_news_description')}</label> 
+                    <div class="controls">
+                        <div id="editor">{$k.content}</div>
+                        <textarea cols="50" rows="5" class="form-control d-none"  name='content' id='content' required>{set_value('content')}</textarea>
+                        {form_error("content")}
+                    </div>
+                </div>
+                    <br>
+
+                    <div class="col-md-6">
+                        <label class="form-label">{lang('attachment')}</label> 
+                        <br>                   
+                        <a href="" id="thumb-image" data-toggle="image" class="img-thumbnail" style="height: 180px; max-width: 200px;">
+
+                            <img src="{assets_url('images/news_images/')}{$k.image}" width="200" height="180" alt="">
+                            {if empty($image) }
+                            <input type="hidden" name="image"  value="{$k.image_id}" id="input-image"/>
+                            {else}
+                            <input type="hidden" name="image"  value="{$image}" id="input-image"/>
+                            {/if}
+
+                        </a>
+
+
+                    </div>
+                    <br>
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit" id="update" name="update" value="news_set">
+                            {lang('text_update')} <i class="fa fa-arrow-circle-right"></i>
+                        </button>
+                    </div>
+                    {form_close()}
+                    {/foreach}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{else}
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle" ></i>
+                    {lang('text_add_news')}
+                </h5>
+
+            </div>
+            <div class="card-body">
+
+                {form_open_multipart('','id="news_form" name="news_form" class="form-login needs-validation" novalidate=""')}
+
+
+                <div class="form-group">
+                    <label class="form-label">{lang('text_news_title')}</label>
+                    <div class="controls">
+                        <input type="text" class="form-control" id="news_title" name="title" value="{set_value('news_title')}"  autocomplete="off"  required>
+                        <div class="invalid-feedback">{lang('the_field_required')}</div>
+
+                        {form_error("title")}
+                    </div>
+                </div>
+
+
+
+                   <div class="form-group">
+                   <label class="form-label" >{lang('text_news_description')}</label> 
+                    <div class="controls">
+                        <div id="editor">{$k.content}</div>
+                        <textarea cols="50" rows="5" class="form-control d-none"  name='content' id='content' required>{set_value('content')}</textarea>
+                        {form_error("content")}
+                    </div>
+                </div>
+ 
+                <br>
+
+
+                <div class="col-md-6">
+                    <label class="form-label">{lang('attachment')}</label>                     
+                    <div class="fileupload fileupload-new " data-provides="fileupload">
+
+                     <a href="" id="thumb-image" data-toggle="image" class="img-thumbnail" style="height: 180px; max-width: 200px;">
+                        <div class="fileupload-preview thumbnail border" style="width: 200px; height: 180px;  ">
+
+
+
+                         <img src="" id="image" name="image" alt="" title="" data-placeholder="" width="200" height="180">
+
+                         <input type="hidden" name="image" value="{$image}" id="input-image"/>
+
+
+                     </div>
+                 </a>
+
+             </div>
+         </div>
+         <br>
+         <div class="form-group">
+            <button class="btn btn-primary btn-block" type="submit" id="submit" name="submit" value="news_set" >
+                {lang('text_submit')} <i class="fa fa-arrow-circle-right"></i>
+            </button>
+        </div>
+        {form_close()}
+
+    </div>
+</div>
+</div>
+</div>
+{/if}
+<br class="mobile" />
+<br class="mobile" />
+<br class="mobile" />
+<br class="mobile" />
+{/block}
+{block name="footer"}
+<script src="{assets_url()}backend/libs/tinymce/tinymce.min.js"></script>
+<script>
+    $(document).on('click', 'a[data-toggle=\'image\']', function(e) 
+    {
+
+        var $element = $(this);
+
+        var $popover = $element.data('bs.popover'); // element has bs popover?
+
+        
+        e.preventDefault();
+
+
+        $('a[data-toggle="image"]').popover('dispose');
+
+        if ($popover) {
+            return;
+        }
+
+        $element.popover({
+            html: true,
+            placement: 'right',
+
+            content: function() {
+                return '<a class="btn btn-falcon-primary me-1 mb-1" type="button" id="button-image" >Edit</a><a class="btn btn-falcon-primary me-1 mb-1" type="button" id="button-clear" >Clear</a>';
+
+            }
+        });
+
+
+        $element.popover('show');
+
+        $('#button-image').on('click', function() {
+            var $button = $(this);
+            var $icon   = $button.find('> i');
+            var $thumb = $element.attr('id');
+            var $target = $element.parent().find('input').attr('id');
+            $('#modal-image').remove();
+
+            $.ajax({
+                url: '{{base_url()}}admin/tools/get_image_gallery_ajax/news_images?target=' + $target + '&thumb=' + $thumb,
+                dataType: 'html',
+                beforeSend: function() {
+                    $button.prop('disabled', true);
+                    if ($icon.length) {
+                        $icon.attr('class', 'fa fa-circle-o-notch fa-spin');
+                    }
+                },
+                complete: function() {
+                    $button.prop('disabled', false);
+
+                    if ($icon.length) {
+                        $icon.attr('class', 'fa fa-pencil');
+                    }
+
+                } ,
+                success: function(html) {
+                    console.log(html);
+
+                    $('body ').append('<div id="modal-image" class="modal">' + html + '</div>');
+                    $('#modal-image').modal('show');
+                    $('#modal-image').modal();
+
+
+
+                }
+            });
+
+
+            $element.popover('dispose');
+        });
+        $('#button-clear').on('click', function() {
+            $element.find('img').attr('src', '{{ img_placeholder }}');
+            $element.parent().find('input').val('');
+            $element.popover('dispose');
+        });
+    }); 
+</script>
+<script src="{assets_url()}backend/libs/quill/quill.min.js"></script>
+
+<!-- Internal Quill JS -->
+<script src="{assets_url()}backend/js/quill-editor.js"></script>
+<script src="{assets_url()}backend/vendors/tinymce/tinymce.min.js"></script>
+
+<script type="text/javascript">
+   
+
+    $("#news_update_form").on("submit",function(e) {
+        var content = $(".ql-editor").html();
+        if (content != '<p><br></p>') {
+            $("#content").val(content);
+        }
+        
+    });
+
+    $("#news_form").on("submit",function(e) {
+        var content = $(".ql-editor").html();
+        if (content != '<p><br></p>') {
+            $("#content").val(content);
+        }
+        
+    });
+</script> 
+
+
+{/block}

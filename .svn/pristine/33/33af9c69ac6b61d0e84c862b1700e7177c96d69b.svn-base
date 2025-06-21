@@ -1,0 +1,148 @@
+{extends file="layout/base.tpl"}
+{block name="head"} 
+<link href="{assets_url()}template/plugins/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" rel="stylesheet" />
+
+<link rel="stylesheet" type="text/css" href="{assets_url('plugins/select2/select2.min.css')}">
+<link href="{assets_url()}plugins/DataTables/datatables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/DataTables/DataTables-1.12.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+<style type="text/css">
+	.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_processing, .dataTables_wrapper .dataTables_paginate {
+		color: #f3eded;
+	}
+
+
+	.select2-container--default .select2-selection--single {
+		background-color: #18273100;
+		border: 1px solid #aaa;
+		border-radius: 4px;
+	}
+	.select2-container--default .select2-selection--single .select2-selection__rendered {
+		color:#dfd6d6;
+		line-height: 11px;
+	}
+
+	.select2-dropdown {
+		background-color: black;
+		border: 1px solid #aaa;
+		border-radius: 4px;
+		box-sizing: border-box;
+		display: block;
+		position: absolute;
+		left: -100000px;
+		width: 100%;
+		z-index: 1051;
+	}
+	.select2-container--default .select2-results__option--selected {
+		background-color: #0a0707;
+	}
+	.select2-container .select2-selection--single {
+		box-sizing: border-box;
+		cursor: pointer;
+		display: block;
+		height: 54px;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+</style>
+{/block}
+{block name="body"} 
+<input type="hidden" id="logType" value="{log_user_type()}">
+<div class="col-sm-12"> 
+	<div class="card"> 
+		
+		<div class="card-content">
+			<div class="col-xl-12 p-0 " align="right">
+				<a href="{base_url()}user/support/create" class="btn btn-primary pull-right" title=""><i class="fa fa-plus"></i>Create New Ticket</a>
+			</div>
+			<div class="card-body">  
+
+				<div class="table-responsive">
+					<table class="table color-table primary-table" id="exportTable">
+						<thead >
+							<tr>
+								<th>Ref #</th>
+								<th>{lang('text_ticket_id')}</th>
+								<th>{lang('text_subject')}</th>
+								<th>{lang('text_status')}</th>
+								<th>{lang('text_help_topic')}</th>
+								<th>{lang('text_image')}</th>
+								<th>{lang('text_last_activity')}</th>  
+
+							</tr>
+						</thead>
+						<tbody>
+							{foreach from=$ticket_arr item=tk}
+							<tr>
+								<td class="">
+									<div class="form-check">
+										<input type="checkbox" name="ticket_ids[]" class="ticketIds form-check-input" value="{$tk.ticket_id}" id="ticket_id_{$tk.ticket_id}" >
+										<label class="form-check-label" for="ticket_id_{$tk.ticket_id}">
+											{counter}
+										</label>
+									</div>
+								</td>
+								<td><a href="{base_url()}{log_user_type()}/support/ticket_details?ticket_id={$tk.enc_id}" target="_blank"># {$tk.name}</a>
+								</td>
+								<td>{$tk.subject}</td>
+								<td>{$tk.status_name}</td>
+								<td>{$tk.topic_name}</td>
+								{if $tk.img}
+								<td>
+									<a href ="{assets_url()}uploads/efiles/{$tk.img}"target="_blank" class="text-primary" style="color:blue">View image</a>
+								</td>
+								{else}
+								<td></td>
+								{/if}
+								<td>{date("d-M-Y H:i:s", strtotime($tk.last_updated))}</td> 
+							</tr> 
+							{/foreach}
+						</tbody>
+					</table>
+				</div>
+				<br>
+				<div class="col-sm-2 mt-20px">
+
+					<div class="pull-left">
+
+
+						<div class="dropdown">
+							<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+								{lang('text_change_status')} 
+							</button>
+							<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+								{foreach from=$status_arr item=statuses}
+								<a href="#" class="dropdown-item change-status" data-val="{$statuses.id}">{$statuses.name}</a>
+								{/foreach}
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+	</div> 
+</div> 
+
+{/block}
+{block name="footer"}
+<script src="{assets_url('support/js/moment.min.js')}"></script>
+<script src="{assets_url('support/js/bootstrap-datetimepicker.js')}"></script>
+<script src="{assets_url('support/js/bootstrap-notify.js')}"></script>
+<script src="{assets_url('support/js/sweetalert2.js')}"></script>
+<script src="{assets_url('support/js/jquery.tagsinput.js')}"></script>
+<script src="{assets_url('support/js/pages.js')}"></script>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		Ticket.changeTicketStatus();
+
+	});
+
+
+
+</script>
+
+{/block}

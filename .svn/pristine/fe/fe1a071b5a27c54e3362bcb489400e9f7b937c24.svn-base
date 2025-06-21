@@ -1,0 +1,91 @@
+<aside class="app-sidebar sticky hidden-print" id="sidebar">
+
+    <!-- Start::main-sidebar-header -->
+    <div class="main-sidebar-header hidden-print">
+        <a href="index.html" class="header-logo">
+            <img src="{assets_url()}images/logo/{$site_details['logo']}" style="height: 62px;" alt="logo" class="desktop-logo">
+            <img src="{assets_url()}images/logo/{$site_details['logo']}" alt="logo" class="toggle-logo">
+            <img src="{assets_url()}images/logo/{$site_details['logo']}" alt="logo" class="desktop-white">
+            <img src="{assets_url()}images/logo/{$site_details['logo']}" alt="logo" class="toggle-white">
+        </a>
+    </div>
+    <!-- End::main-sidebar-header -->
+
+    <!-- Start::main-sidebar -->
+    <div class="main-sidebar hidden-print" id="sidebar-scroll">
+        <!-- Start::nav -->
+        <div class="main-sidebar__user clearfix d-flex justify-content-center">
+            <div class="dropdown user-pro-body">
+                <span class="avatar avatar-xxl m-3 online avatar-rounded pro-pic">
+                    <img src="{assets_url()}images/profile/{$user_details['user_photo']}" alt="img">
+                </span>
+                <h6 class="fw-semibold mb-0" style="margin-left: 22px;">{log_user_name()}</h6>
+                <p class="mb-0 m-3 mt-0 text-primary">{$user_rank_name}</p>
+            </div>
+        </div>
+        
+        <nav class="main-menu-container nav nav-pills flex-column sub-open hidden-print">
+
+            <div class="slide-left" id="slide-left">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24" viewBox="0 0 24 24"> <path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z"></path> </svg>
+            </div>
+            <ul class="main-menu">
+
+                {foreach from=$SIDE_MENU item=category key=cat}
+                <!-- Start::slide__category -->
+                {* <li class="slide__category"><span class="category-name">Main</span></li> *}
+                <!-- End::slide__category -->
+
+                {$counter = 0}
+
+                {assign var=sub_menu_count value=0}
+                {foreach from=$category item=v key=k}
+
+                {$sub_menu_count=count($v.submenu)} 
+
+                {if !$sub_menu_count}
+                <!-- Start::slide -->
+                <li class="slide">
+                    <a href="{$v.link}" class="side-menu__item {if $v.is_selected == 'active'}active{/if}">
+                        <i class="side-menu__icon {$v.icon} fa-1sm"  viewBox="0 0 24 24"></i>
+                        <span class="side-menu__label">{lang($v.text)}</span>
+                    </a>
+                </li>
+                <!-- End::slide -->
+
+                {else}
+
+                <!-- Start::slide -->
+                <li class="slide has-sub {if $v.is_selected == 'active'}open{/if}">
+                    <a href="javascript:void(0);" class="side-menu__item">
+                        <i class="side-menu__icon {$v.icon} fa-1sm" viewBox="0 0 24 24"></i>
+                        <span class="side-menu__label">{lang($v.text)}</span>
+                        <i class="fe fe-chevron-right side-menu__angle"></i>
+                    </a>
+                    <ul class="slide-menu child1">
+                        <li class="slide side-menu__label1">
+                            <a href="javascript:void(0);">{lang($v.text)}</a>
+                        </li>
+                        {foreach from=$v.submenu item=i}
+                        <li class="slide">
+                            <a href="{$i.link}" class="side-menu__item {$i.is_selected}">{lang($i.text)}</a>
+                        </li>
+                        {/foreach}
+                    </ul>
+                </li>
+                <!-- End::slide -->
+
+                {/if} 
+                {/foreach}
+
+                {/foreach}
+
+            </ul>
+            <div class="slide-right" id="slide-right"><svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24" viewBox="0 0 24 24"> <path d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z"></path> </svg></div>
+        </nav>
+        <!-- End::nav -->
+
+    </div>
+    <!-- End::main-sidebar -->
+
+</aside>

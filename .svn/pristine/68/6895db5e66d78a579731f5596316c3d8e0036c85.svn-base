@@ -1,0 +1,981 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Inventory extends Base_Controller {
+
+	function __construct()
+	{
+		parent::__construct(); 	
+		$this->load->model( "Calculation_model" );
+		$this->load->library('cart');
+		$this->load->library('wishlist');
+		$this->load->library('pagination');
+	}
+	function my_shop(){
+
+		$search_arr = [
+			'status' => 'active', 
+		];
+		$this->perPage = 20;
+		$filter_details['limit'] = $this->perPage;
+		$category_id = NULL;
+		if($this->input->get('category'))
+			$category_id = $this->Inventory_model->getCategoryIdFromSlug($this->input->get('category'));
+		$filter_details['category_id'] = $category_id;
+		$filter_details['status'] = 'active';
+		$filter_details['available'] = 'yes';
+		$filter_details['order_by'] = 'id';
+		$filter_details['order'] = 'ASC';
+		$data['filter_details'] = $filter_details;
+		$data['perPage'] = $this->perPage;
+		$filter_details['limit'] = 6;
+		$filter_details['order_by'] = 'id';
+		$filter_details['order'] = 'DESC';
+		$data['category_id'] = $category_id;
+		$data['category_name'] = $this->Base_model->getCategoryName($category_id);
+		$sub_categories = $sub_category_names = [];
+		if($this->input->get('category')){
+			$data['category']=$this->Inventory_model->getAllCategory($search_arr);
+			$categories = $this->findCatSubsCat($category_id, $this->data['allCategories']);
+			$data['categories'] = $categories;;
+			$sub_categories = !empty($categories) ? $categories['sub_categories'] : [];
+			$sub_category_names = !empty($sub_categories) ? array_column($sub_categories, 'category_name', 'slug') : [];
+
+		}		 
+		$data['sub_categories'] =$sub_categories;
+		$data['sub_category_names'] =$sub_category_names;
+		$data['color_details'] = $this->Inventory_model->getColorDetails();
+		$dimensions  = $this->Inventory_model->getdimensionDetails();
+		$data['dimensions_details'] = array_unique(array_column($dimensions,'name','id'));
+		$data['title'] = "My Shop";
+		$data['category']=$this->Inventory_model->getAllCategory($search_arr);
+		$this->loadView($data);
+
+	}
+	private function findCatSubsCat($category_id, $categories)
+	{
+		$details = [];
+		$details=$this->GetCategoriesSub($category_id);
+		return $details;
+	}
+	public function GetCategoriesSub($id='')
+	{
+		$this->load->model('Inventory_model');
+		$details=array();
+		$this->db->select('*');
+		$this->db->from('category');
+		$this->db->where('id',$id);
+		$res=$this->db->get();
+		foreach ($res->result_array() as $row) {
+			$search_arr = [
+				'parent' => $row['id'], 
+				'status' => 'active', 
+			];  
+			$row['sub_categories'] =$this->getSubCategory($search_arr);
+			$details=$row;
+
+		}
+		return $details;
+	}
+	public function getSubCategory( $search_arr=[], $details=[])
+	{
+		$this->db->select('id, category_name, parent, sort_order, date,slug')
+		->from('category')
+		->order_by('sort_order','ASC');
+
+		if ( element('parent', $search_arr) ) {
+			$this->db->where('parent',$search_arr['parent']);  	
+		}
+
+		if ( element('status', $search_arr) !='all') {
+			$this->db->where('status',$search_arr['status']); 
+		}
+
+		if ( element( 'id', $search_arr)) {
+			$this->db->where( 'id', $search_arr['id'] ); 
+		}
+
+		$res=$this->db->get(); 
+		foreach ($res->result_array() as $row) {
+
+			if ( element( 'id', $search_arr)) {
+				return $row;
+			}
+			$details[]=$row;
+		}
+		return $details;
+	}
+	function product_cart()
+	{
+		$data['title'] = "Cart";
+		$data['cart_contents']= $this->cart->contents();
+		$data['cart_total']= $this->cart->total();
+		$this->loadView($data);
+	}
+	function product_details($enc_product_id='')
+	{
+		$product_id=$this->Base_model->encrypt_decrypt('decrypt',$enc_product_id);
+		$filter_details['id'] = $product_id;
+		$filter_details['status'] = 'active';
+		$filter_details['available'] = 'yes';
+		$filter_details['order_by'] = 'sort_order';
+		$filter_details['order'] = 'ASC';
+		$filter_details['limit'] = '1';
+		$data['product_details'] = $this->Inventory_model->getProductDetails($filter_details);
+		$data['title'] = "Product Details";
+		$this->loadView($data);
+	}
+
+	function more_datas()
+	{
+		if ($this->input->is_ajax_request()) 
+		{
+			$this->load->library("pagination");
+			$lastID = $this->input->post('lastID');
+			$post_arr = $this->input->post();
+			$filter_params['returnType'] = "count";
+			$category_id='';
+			$filter_params['color'] =$this->input->post('color');
+			$filter_params['dimension'] =$this->input->post('dimension');
+			$filter_params['category'] =$this->input->post('category');
+			$filter_params['status'] = 'active';
+			$filter_params['available'] = 'yes';
+			$filter_params['order_by'] = 'id';
+			$filter_params['order'] = 'ASC';
+			$data['postNum'] = $this->Inventory_model->getProductDetails( $filter_params );
+			$filter_params['order_by'] = '';
+			$filter_params['returnType'] = '';
+			$filter_params['order_by'] = 'id';
+			$filter_params['order'] = 'ASC';
+			$config['base_url'] = base_url("user/inventory/more_datas");
+			$config['total_rows'] =$data['postNum'];
+			$config['per_page'] = '9';
+			$config['uri_segment'] = 4;
+			$choice = $config['total_rows'] / $config['per_page'];
+			$this->pagination->initialize($config);
+			$data['page'] = ($this->uri->segment(4)) ? $this->uri->segment(4) : 0;
+			$filter_params['per_page'] = '9';
+			$filter_params['page'] = $data['page'];
+			$view['product_details'] =  $this->Inventory_model->getProductDetails( $filter_params );
+			$view["links"] = $this->pagination->create_links();
+			$data['post']=  $this->smarty->view('user/inventory/product_grid.tpl', $view, true);
+			$this->output
+			->set_status_header(200)
+			->set_content_type('application/json', 'utf-8')
+			->set_output(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+			->_display();
+			exit(); 
+		}
+
+	}
+	function addToWhishlist()
+	{
+		if ($this->input->is_ajax_request()) {
+			$enc_product_id = $this->input->post('product_id');
+
+
+			$product_details =[];
+			if($enc_product_id)
+			{
+				$product_id = $this->Base_model->encrypt_decrypt('decrypt', $enc_product_id);
+				$contents=$this->wishlist->contents();
+				$id=array_column($contents,'id');
+				if(in_array($product_id, $id)){
+					$response['status'] = FALSE;
+					$response['msg'] = lang('product_already_added_to_wishlist');
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}
+				$filter_details['status'] = 'active';
+				$filter_details['available'] = 'yes';
+				$filter_details['order_by'] = 'id';
+				$filter_details['order'] = 'ASC';
+				$filter_details['id'] = $product_id;
+				$product_details = $this->Inventory_model->getProductDetails($filter_details);
+			}
+			if( element('size', $this->input->post()) )
+			{
+				$post_arr=$this->input->post();
+				$size=$this->Inventory_model->getDimensionNameOnly($post_arr['size']);
+
+			} 
+
+			if( element('color', $this->input->post()) )
+			{
+				$post_arr=$this->input->post();
+				$color=$this->Inventory_model->getColorName($post_arr['color']);
+
+			}
+
+			if(empty($product_details))
+			{
+				$response['status'] = FALSE;
+				$response['msg'] = lang('No_product_found');
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();	
+			}	
+
+			if( $wishlist_contents = $this->wishlist->contents() ){
+				$item_ids = array_column( $wishlist_contents, 'rowid', 'id') ;
+			}else{
+				$item_ids = [];
+			}
+			$row_id = element( $product_details['id'], $item_ids );
+			$data = array(
+
+				'id'      => $product_details['id'],
+				'qty'     => 1,
+				'user_id'     => log_user_id(),
+				'price'   => $product_details['price'],
+				'strike_price'   => $product_details['strike_price'],
+				'name'    => $product_details['product_name'],
+				'shipping_charge'   => $product_details['shipping_charge'],
+				'size' => $size,
+				'color' => $color,	
+				'slug_url'   => $product_details['slug_url'],
+				'options' => array(
+					'img'		=>$product_details['image'],
+					'enc_id'	=> $product_details['enc_product_id'],
+					'description' => $product_details['description'],
+				)
+			);
+			if(!log_user_id()){
+				$response['status'] = FALSE;
+				$response['msg'] = lang('Failed_Please_Login');
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}else{
+
+				$this->wishlist->insert($data);
+				$total=$this->wishlist->total_items(); 
+				$response['wishlist_total'] = $total;
+				$wishlist_contents = $this->wishlist->contents();
+				$data['wishlist_contents']=$wishlist_contents;
+				$response['wishlist_contents'] = $this->smarty->view("user/inventory/wishlist.tpl", $data, true);	
+				$response['status'] = TRUE;
+				$response['msg'] = lang('successfully_added');
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();	
+			}
+		}
+	}
+
+	function wishlist()
+	{
+		if(!$this->wishlist->contents())
+		{
+			$this->redirect(lang('wishlist is empty'), "inventory/my-shop", false);
+		}
+		$data['title']=lang('Wishlist');
+		$wishlist_contents = $this->wishlist->contents();
+		$data['wishlist_contents']=$wishlist_contents;
+		$this->loadView($data);
+
+	}
+	function remove_wishlist($product_id)
+	{
+		$this->wishlist->remove($product_id);
+		if(	$this->wishlist->remove($product_id))
+
+		{
+			$this->redirect(lang('Item_removed_from_your_wishlist_Successfully'), "user/inventory/wishlist", true);
+		}
+		else{
+			$this->redirect(lang('error_on_removing'), "user/inventory/wishlist", false);
+		}
+
+	}
+	function Removewishlist()
+	{
+		if(!$this->wishlist->contents())
+			$this->redirect(lang('Your_Wishlist_is_empty'),"user/inventory/my-shop", False);
+		if($this->input->post('delete'))
+		{
+			$row_id = $this->input->post('delete');
+
+			if(	$this->wishlist->remove($row_id))
+			{
+				$wishlist_contents = $this->wishlist->contents();
+				$wishlist_total = $this->wishlist->total_items();
+				$data['wishlist_contents']=  $wishlist_contents;
+				$response['wishlist_contents'] = $this->smarty->view("user/inventory/wishlist.tpl", $data, true);
+				$response['wishlist_total'] = $wishlist_total;
+				$response['msg'] = lang('Item_deleted_From_Wishlist');
+				$response['status'] = TRUE;
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+				$this->redirect(lang('item_removed'), "cart", true);
+			}
+			else{
+				$this->redirect(lang('error_on_removing'), "cart", false);
+			}
+
+		}
+	}
+
+	function addToCart()
+	{
+		if ($this->input->is_ajax_request()) {
+			$enc_product_id = $this->input->post('product_id');
+			$post_arr=$this->input->post();
+			$product_details =[];
+			if($enc_product_id)
+			{
+				$product_id = $this->Base_model->encrypt_decrypt('decrypt', $enc_product_id);
+				$filter_details['status'] = 'active';
+				$filter_details['available'] = 'yes';
+				$filter_details['order_by'] = 'id';
+				$filter_details['order'] = 'ASC';
+				$filter_details['id'] = $product_id;
+				$product_details = $this->Inventory_model->getProductDetails($filter_details);
+			}	
+
+
+			if(empty($product_details))
+			{
+				$response['status'] = FALSE;
+				$response['msg'] = lang('No_product_found');
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();	
+			}	
+			if( $cart_contents = $this->cart->contents() ){
+
+				$item_ids = array_column( $cart_contents, 'rowid', 'id') ;
+			}else{
+				$item_ids = [];
+			}
+			$row_id = element( $product_details['id'], $item_ids );
+			if( element('quantity', $this->input->post()) )
+			{
+				$post_arr=$this->input->post();
+				$quantity=$post_arr['quantity'];
+
+			}
+			else
+			{
+				$quantity=1;
+
+			}
+			if( element('size', $this->input->post()) )
+			{
+				$post_arr=$this->input->post();
+				$size=$this->Inventory_model->getDimensionNameOnly($post_arr['size']);
+
+			}else{
+				$size=0;
+			} 
+			if( element('color', $this->input->post()) )
+			{
+				$post_arr=$this->input->post();
+				$color=$this->Inventory_model->getColorName($post_arr['color']);
+
+			}else{
+				$color=0;
+			} 
+			if($product_details['quantity'] < $quantity ){
+				$response['status'] = FALSE;
+				$response['msg'] = lang('Sorry_Insufficient_Quantity_of');
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();		
+				die();	
+			}else{
+
+				$data = array(
+
+					'id'      => $product_details['id'],
+					'qty'     => $quantity,
+					'price'   => $product_details['price'],
+					'shipping_charge'   => $product_details['shipping_charge'],
+					'slug_url'   => $product_details['slug_url'],
+					'name'    => $product_details['product_name'],
+					'options' => array(
+						'img'		=>$product_details['image'],
+						'enc_id'	=> $product_details['enc_product_id'],
+						'description' => $product_details['description'],
+						'size' => $size,
+						'color' => $color,
+						'quantity' =>$product_details['quantity'],
+					)
+				);
+
+				$this->cart->product_name_safe = false;
+				if($this->cart->insert($data))
+				{
+					$total=$this->cart->total_items(); 
+					$response['cart_total'] = $total;
+					$cart_contents = $this->cart->contents();
+					$data['cart_contents']=$cart_contents;
+					$response['cart_contents'] = $this->smarty->view("user/inventory/product_cart.tpl", $data, true);	
+					$response['status'] = TRUE;
+					$response['msg'] = lang('successfully_added');
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();	
+				}else{
+					$response['status'] = False;
+					$response['msg'] = 'Error On Adding';
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();	
+				}
+			}
+		}
+	}
+
+	function clear_cart()
+	{
+		if ($this->input->is_ajax_request()) {
+			$drop=$this->cart->destroy();
+			$total=$this->cart->total_items(); 
+			$response['cart_total'] = $total;
+			$cart_contents = $this->cart->contents();
+			$data['cart_contents']=$cart_contents;
+			$response['status'] = true;
+			$this->output
+			->set_status_header(200)
+			->set_content_type('application/json', 'utf-8')
+			->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+			->_display();
+			exit();
+
+		}
+		else
+		{  
+			$response['success'] = false;
+			$this->output
+			->set_status_header(200)
+			->set_content_type('application/json', 'utf-8')
+			->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+			->_display();
+			exit();
+
+		}
+
+	}
+
+	function update_cart()
+	{
+		if ($this->input->is_ajax_request()) {
+			$cart_update=NULL;
+			$post_arr = $this->input->post();
+// print_r($post_arr);die();
+			$cart = $this->cart->contents();
+
+			$filter_details['status'] = 'active';
+			$filter_details['available'] = 'yes';
+			$filter_details['order_by'] = 'sort_order';
+			$filter_details['order'] = 'ASC';
+			$filter_details['limit'] = '1';
+
+			foreach ($post_arr['row_id'] as $key => $row_id) {
+				if($cart[$row_id]['qty'] > $post_arr['quantity'][$key]){
+
+					$new_qunatity = $post_arr['quantity'][$key];
+				}else{
+					$new_qunatity = abs($cart[$row_id]['qty'] - $post_arr['quantity'][$key] ) + $cart[$row_id]['qty'] ;
+				}
+				if($post_arr['quantity'][$key]>0)
+				{
+
+					$filter_details['id'] = $cart[$row_id]['id'];
+
+					$product_info = $this->Inventory_model->getProductDetails(( $filter_details ));
+					if($cart[$row_id]['qty'] > $post_arr['quantity'][$key]){
+
+						$new_qunatity = $post_arr['quantity'][$key];
+					}else{
+						$new_qunatity = abs($cart[$row_id]['qty'] - $post_arr['quantity'][$key] ) + $cart[$row_id]['qty'] ;
+					}
+
+					if($product_info['quantity'] < $new_qunatity ){
+						// $this->web_redirect(lang('Sorry_Insufficient_Quantity_of'), "cart", false);
+						$response['success'] = false;
+						$response['msg']=lang('Sorry_Insufficient_Quantity_of').$cart[$row_id]['name'];
+						$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+						->_display();
+						exit();
+					}
+					$data = array(
+						'rowid'   => $row_id,
+						'qty'     => $post_arr['quantity'][$key],
+					);
+					$cart_update = $this->cart->update($data);
+				}
+
+
+			} 
+			if(!$cart_update)
+			{  
+
+				$response['success'] = false;
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+			else
+			{  
+				$total=$this->cart->total_items(); 
+				$response['cart_total'] = $total;
+				$cart_contents = $this->cart->contents();
+				$total_price=0;
+				foreach($cart_contents as $v){
+					$total_price=$total_price+$v['subtotal'];
+					$v['sub_total'] = cur_format($v['subtotal']);
+					$cart_contents_diplay[] = $v;
+				}
+				$response['total_price']=cur_format($total_price);
+				$response['cart_contents_diplay']=$cart_contents_diplay;
+				$data['cart_contents']=$cart_contents;
+				$response['cart_contents'] = $this->smarty->view("user/inventory/product_cart.tpl", $data, true);
+				$response['status'] = true;		
+				$response['msg']='Cart Updated successfully';	
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+
+
+		}
+	}
+	function remove_product()
+	{  
+		$product_id=$this->input->post('id');
+		if(	$this->cart->remove($product_id))
+		{
+			$data=TRUE;
+		}
+		else{
+			$data= FALSE;
+		}
+		echo json_encode($data);
+
+	}
+	function check_out()
+	{
+		$data['title'] = "Check Out";
+		$contents = $this->cart->contents();
+		if(empty($contents)){
+			$this->redirect('Please add atleast one product', "inventory/my-shop", False);
+		}
+		$user_id=log_user_id();
+		$user_type='user';
+		$customer_details = $this->Inventory_model->getAllUserDetails($user_id);
+		$available_address = $this->Inventory_model->getAvailableAddress($user_id);
+
+		$data['customer_details']=$customer_details;
+
+		if(count($available_address) >= 1)
+		{
+			$address_id = $available_address[0]['id'];
+		}
+		else
+		{
+			$address_id = '';
+		}
+		if($this->input->post('add_address')){
+			if( $this->validate_address())
+			{
+				$post_data=$this->input->post();
+				$post_data['user_id']= $user_id;
+				$post_data['user_type']= $user_type;
+				$post_data['default_address_id'] = $this->Inventory_model->insertAddress( $post_data );
+				$update_address = $this->Inventory_model->updateUserAddress($post_data,log_user_id()); 
+				$this->redirect("Address Added Successfully", "inventory/check-out", True);
+
+			}
+		}
+
+		$data['address_id']=$address_id;
+		$data['available_address']=$available_address;
+		$data['user_id']=$user_id;
+		if($this->input->post('checkout_address')){
+			$post_arr=$this->input->post();
+			$this->form_validation->set_rules('address_id', lang('Address'), 'trim|required|is_exist[address.id]'); 
+			if($this->form_validation->run()){
+				foreach ( $contents as $key => $item) {
+					$product_details = $this->Inventory_model->getRequestProductDetails($item['id']);
+					if($product_details['quantity'] < $item['qty'] ){
+						$this->Inventory_model->rollback();
+						$this->redirect("Sorry Insufficient Quantity Of " .' '. $item['name'], "inventory/check-out", false);
+					}
+				} 					
+				$amount = $this->cart->total();
+				$total_amount = $this->cart->total();
+				if($this->input->post('payment_method')=='cod'){
+					$this->Inventory_model->begin();
+					$order_id = $this->Inventory_model->placeOrder($user_id, $contents, $amount, $user_type, $address_id,0,0,$post_arr['payment_method'],$product_details);
+
+					$insert=$this->Inventory_model->insertPaymentRequest($user_id,$amount,$post_arr);
+					$checkout_order_id=$this->Inventory_model->insertCheckoutOrders($total_amount,'checkout',$user_id,$contents);
+
+					if($order_id && $checkout_order_id)
+					{
+						$product_details=$this->Inventory_model->getOrderDetails($order_id);
+
+						$mail_contents="";
+
+						foreach ($product_details as $v) 
+						{
+							$mail_contents=$mail_contents . '
+							<tr style=" border-top: 1px solid #ddd;
+							border-bottom: 1px solid #ddd;">
+							<td valign="top" style="padding-left: 19px;">
+							<img src="'.assets_url().'images/products/'.$v['image'].'" alt="" width="80" style="margin-top: 15px;">
+							</td>
+							<td valign="top" style="padding-left: 19px;">
+							<h5 style="margin-top: 15px;"> '. $v['product_name'] .'</h5>
+							</td>
+							<td valign="top" style="padding-left: 19px;">
+							<h5 style="font-size: 14px; color:#444;margin-top:15px;    margin-bottom: 0px;">
+							<span></span> </h5>
+							<h5 style="font-size: 14px; color:#444;margin-top: 10px;"> '. $v['quantity'] .'<span></span></h5>
+							</td>
+							<td valign="top" style="padding-left: 19px;">
+							<h5 style="font-size: 14px; color:#444;margin-top:15px"><b>'. cur_format($v['subtotal']) .'</b></h5>
+							</td>
+							</tr>'; 
+						}  
+
+						$shipping_address=$this->Inventory_model->getAddressDetails($address_id);
+						$select_arr = 'email';
+						$data['user_details'] = $this->Base_model->getUserDetails($user_id,$select_arr);
+						$details['email'] = $data[ 'user_details' ]['email'];
+						$details['count']=count($product_details) + 1;
+						$details['order_number']="O#".($order_id + 000);
+						$details['contents']=$mail_contents;
+
+						$details['total_amount']=$product_details[0]['final_amount'];
+
+						$details['full_name'] =  $shipping_address['first_name'] ." " .  $shipping_address['second_name'];
+						$details['address'] =  $shipping_address['address'];
+						if ( element('city', $shipping_address)) 
+						{
+							$details['address'] .= " , " .  $shipping_address['city'] ;
+						}
+						$details['address'] .=  " , " .  $shipping_address['zip_code'] ." , " .  $shipping_address['state'] ." , ". $shipping_address['country'];
+
+
+						$enc_order_id= $this->Base_model->encrypt_decrypt('encrypt', $order_id);
+
+						$this->load->model('Mail_model');
+						$this->load->model('Settings_model');
+						$send_mail = $this->Mail_model->sendFrontEndEmails('order_confirmation', $details ,$product_details); 
+						$details['customer_email']=$details['email'];
+						$details['enc_order_id']=$enc_order_id;
+
+						$details['email']=$this->Base_model->data[ 'site_details' ]['email'];
+						$send_mail = $this->Mail_model->sendFrontEndEmails('order_confirmation_to_admin', $details ,$product_details); 
+						$messagecontent = "Dear {$details['full_name']},".'<br>'."
+						Your Order #{$order_id} placed successfully by ". $this->data[ 'site_details' ]['name'] ." .Product will be delivered very shortly.".'<br>'."Thank you for shopping with" .'<br>'.$this->data[ 'site_details' ]['name'];
+
+
+						$checkout_order_id=$this->Base_model->encrypt_decrypt('encrypt', $checkout_order_id);	
+
+						$enc_user_id= $this->Base_model->encrypt_decrypt('encrypt', $user_id);
+						$this->session->unset_userdata('user_id'); 
+						$this->Inventory_model->commit();
+						$data['checkout_order_id']=$checkout_order_id;
+						$drop=$this->cart->destroy();
+						$this->redirect(lang('Your_order_placed_Successfully'), "inventory/my-shop", true);	
+
+					}else{
+						$this->Inventory_model->rollback();
+						$this->redirect("Error On Placing", "inventory/check-out", false);	
+
+					}
+
+				}else{
+					$this->Inventory_model->rollback();
+					$this->redirect("Error On Placing", "inventory/check-out", false);	
+
+				}
+
+			}else{
+				$this->Inventory_model->rollback();
+				$this->redirect("Error On Placing", "inventory/check-out", false);	
+
+			}
+		}
+		$this->load->model('Zone_model');
+		$countries = $this->Zone_model->getAllCountries();
+		$data['countries']=$countries;
+		$this->loadView($data);
+	}
+	function validate_address()
+	{ 
+		$this->form_validation->set_rules('first_name', lang('text_full_name'), 'trim|required'); 
+		$this->form_validation->set_rules('last_name', lang('Last_Name'), 'trim|required'); 
+		$this->form_validation->set_rules('address', lang('Address'), 'trim|required'); 
+		$this->form_validation->set_rules('pin_code',lang('Post_code'), 'trim|required|numeric|max[6]');
+		$this->form_validation->set_rules('district', lang('District'), 'trim|required');
+		$this->form_validation->set_rules('phone', lang('Phone_number'), 'trim|required|numeric|min_length[5]|max_length[10]'); 
+		$this->form_validation->set_rules('email', lang('Email'), 'trim|required|valid_email'); 
+		$response = $this->form_validation->run(); 
+		return $response;
+	}
+
+
+	public function order_history($order_status='all')
+	{
+		$user_id=log_user_id();
+
+		$from_date ='';// date('y-m-01');
+		$to_date = '';//date('y-m-d');
+		
+		if($this->input->post('submit')) {	
+
+			$post = $this->input->post();
+			$from_date = $post['from_date'];
+			$this->session->set_userdata('filter_from_date', $from_date);
+			$to_date = $post['end_date'];	
+			$this->session->set_userdata('filter_to_date', $to_date);
+			$order_status=$post['order_status'];			
+		}else{
+			if($this->session->userdata('filter_from_date') != NULL){
+				$from_date = $this->session->userdata('filter_from_date');
+			}
+			if($this->session->userdata('filter_to_date') != NULL){
+				$to_date = $this->session->userdata('filter_to_date');
+			}
+		}
+		$data['order_details'] = $this->Inventory_model->getOrderDetailsUser($user_id,$order_status,$from_date, $to_date);
+
+		// print_r($data['order_details']);
+		// die();
+
+
+
+		$data['from_date'] = $from_date ;
+		$data['end_date'] = $to_date ;
+		$data['order_status'] = $order_status ;
+		$data['title'] = "Order History" ;
+		$this->loadView($data);
+
+
+	}
+
+	function order_invoice($id=''){
+
+		
+
+
+		// $this->load->model('Website_model');
+		if($id)
+		{
+			$order_id = $this->Base_model->encrypt_decrypt('decrypt', $id);
+			
+		}
+
+		else{
+			$msg = lang('text_invalid_user_name');
+			$this->redirect($msg, 'inventory/order-history', FALSE);
+		}
+
+		
+
+		$full_order_details = $this->Inventory_model->getOrderInfo($order_id);
+		
+		$order_details=element(0,$full_order_details);
+		// print_r($order_details);
+		// die();
+
+		
+		if($order_details){
+
+			// $user_details['user_name'] = $this->Base_model->IdToUserName($order_details['user_id']);
+			$user_details['full_name'] = $this->Base_model->getFullName($order_details['customer_id']);
+
+			$country_id = $this->Base_model->getUserInfoField('country',$order_details['customer_id']);
+			
+			$user_details['country_name'] = $this->Zone_model->IdToCountryName($country_id);
+			$state_id = $this->Base_model->getUserInfoField('state',$order_details['customer_id']);
+			$user_details['state_name'] = $this->Zone_model->IdToStateName($state_id);
+			$user_details['address'] = $this->Base_model->getUserInfoField('address',$order_details['customer_id']);
+			$user_details['zip_code'] = $this->Base_model->getUserInfoField('zip_code',$order_details['customer_id']);
+			$user_details['mobile'] = $this->Base_model->getUserInfoField('mobile',$order_details['customer_id']);
+			$user_details['email'] = $this->Base_model->getUserInfoField('email',$order_details['customer_id']);
+
+			// print_r($user_details);
+			// die();
+
+
+
+			$data['order_user_details']=$user_details;
+		}else{
+			$msg = lang('text_invalid_user_name');
+			$this->redirect($msg, 'inventory/order-history', FALSE);
+		}
+
+		$data['order_details']=$order_details;
+		$data['full_order_details']=$full_order_details;
+		
+
+		$user_id = log_user_id();
+		$data['title']='Order invoice';
+		$this->loadView($data);
+
+	}
+
+
+
+
+	function orders()
+	{
+		$data['title']='Orders';
+		$user_id = log_user_id();
+		$data['order_details'] = $this->Inventory_model->getOrderInfo($user_id);
+		$this->loadView($data);
+	}
+
+	public function order_details_ajax() {
+		if ($this->input->is_ajax_request()) {
+			$draw = $this->input->post('draw');
+			$post_arr = $this->input->post();
+			$post_arr['user_id']=log_user_id();
+
+			// print_r($post_arr['order_status']);die();
+
+			$count_without_filter = $this->Inventory_model->getOrderDetailsajaxCount($post_arr['order_status'],log_user_id());
+			$count_with_filter = $this->Inventory_model->getOrderDetailsAjax($post_arr, 1);
+			$result_data = $this->Inventory_model->getOrderDetailsAjax($post_arr);
+			// print_r($result_data);
+			// die();
+			$response = array(
+				"draw" => intval($draw),
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $result_data,
+			);
+
+			echo json_encode($response);
+		}
+	}
+
+	function cancel_product() 
+	{
+		// $this->load->model('Inventory_model');
+		
+		if ($this->input->is_ajax_request()) { 
+			if($this->input->post() ){ 
+				$post_arr = $this->input->post(); 
+				$result=null;
+		// print_r($post_arr);die();
+				// $post_arr['id'] = $this->Base_model->encrypt_decrypt('decrypt', $post_arr['id']);
+				if($post_arr['status']=='Cancelled'){
+					// $this->load->model('Website_model');
+					$order_details=$this->Inventory_model->getOrderDetails($post_arr['id']);
+					$product_id=$order_details[0]['product_id'];
+					$post_arr['quantity']=$order_details[0]['quantity'];
+					$reason=$post_arr['reason'];
+					$update_qty = $this->Inventory_model->updateQty($quantity,$product_id);
+
+					$result = $this->Inventory_model->updateNotificationStatus($post_arr);
+					$res = $this->Inventory_model->updateOrderStatus($post_arr);
+
+				}
+				if($post_arr['status']=='Return'){
+					// $this->form_validation->set_rules('return_reason', 'Return Reason', 'trim|required');
+
+					// if ($this->form_validation->run()) {
+					$result = $this->Inventory_model->updateNotificationStatus($post_arr);
+					$res = $this->Inventory_model->updateOrderStatusUser($post_arr);
+					// $this->load->model('Website_model');
+					// $order_details=$this->Website_model->getOrderDetails($post_arr['id']);
+					// $product_id=$order_details[0]['product_id'];
+					// $quantity=$order_details[0]['quantity'];
+					// $update_qty = $this->Inventory_model->updateQty($quantity,$product_id);
+					// }
+					
+
+					// print_r($res);
+					// die();
+
+				}
+				
+				if($result && $res){
+
+					$response = [
+						'success' => TRUE,
+						'msg' =>"Successfully Changed the Status",
+					];
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}else{
+
+					$response = [
+						'success' => FALSE,
+						'msg' =>"Error On Updating",
+					];
+					$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+					->_display();
+					exit();
+				}
+			}else{
+				$response = [
+					'success' => FALSE,
+					'msg' =>"Error On Updating",
+				];
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			} 
+		}
+	}
+
+
+	
+
+}

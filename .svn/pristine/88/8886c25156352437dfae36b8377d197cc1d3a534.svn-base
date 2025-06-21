@@ -1,0 +1,352 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+<link href="{assets_url()}plugins/DataTables/datatables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/DataTables/DataTables-1.12.1/css/buttons.dataTables.min.css" rel="stylesheet" />
+<link href="{assets_url()}plugins/select2/select2.min.css" rel="stylesheet" />
+{/block}
+{block name="body"} 
+
+<div class="modal fade bd-example-modal-lg" id="modal-product-add" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myLargeModalLabel">{lang('Add_Color')}</h4>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            {form_open_multipart('','id="add-form" class="needs-validation" novalidate=""')}
+            <div class="modal-body">
+
+                <input type="hidden" name="submit" value="add">
+                
+                <div class="form-group mb-3">
+                    <div class="col-sm-12">
+                        <input class="form-control" type="text" name="name" id="name" placeholder="{lang('color_name')}" required autocomplete="off">
+                        <div class="invalid-feedback">
+                            {lang('field_required')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <div class="col-sm-12">
+                        <label class="col-sm-3 col-form-label pt-0">{lang('Select_Color')}</label>
+
+                        <input class="form-control form-control-color" type="color" name="color_code" id="color_code" value="{set_value('color_code', '#563d7c')}" required autocomplete="off">
+                        <div class="invalid-feedback">
+                            {lang('field_required')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <div class="col-sm-12">
+                        <input class="form-control" type="text" name="code" id="code" placeholder="{lang('Code')}" required autocomplete="off">
+                        <div class="invalid-feedback">
+                            {lang('field_required')}
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer"> 
+                <button class="btn btn-light btn-air-light" type="button" data-bs-dismiss="modal" data-bs-original-title="" title="">{lang('Close')}</button>
+                <button class="btn btn-primary btn-air-primary add-color" type="submit" name="add" value="Submit" >{lang('Add')}</button>
+            </div>
+            {form_close()}         
+        </div>
+    </div>
+</div>
+
+<div class="modal fade bd-example-modal-lg" id="modal-product-edit" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{lang('Color_Details')}</h5>
+                <div class="justify-content-right" align="right">
+                    <button align="right" class="btn btn-outline-primary btn-pill btn-air-primary" type="button" data-bs-toggle="modal" data-bs-target="#modal-product-add">+ {lang('Add_Color')}</button>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive product-table">
+                    <table class="table display" id="dataTable">
+                        <thead>
+                            <tr>
+                             <th>#</th>
+                             <th>{lang('color_name')}</th>
+                             <th>{lang('Code')}</th>
+                             <!-- <th>{lang('Category')}</th> -->
+                             <th>{lang('status')}</th>
+                             <th>{lang('text_date')}</th>
+                             <th>{lang('text_actions')}</th>
+                         </tr>
+                     </thead>
+
+                 </table>
+             </div>
+         </div>
+     </div>
+ </div>
+</div>
+{/block}
+{block name="footer"} 
+<script src="{assets_url()}plugins/DataTables/datatables.min.js"></script>
+<script src="{assets_url('plugins/DataTables/media/js/jquery.dataTables.min.js')}"></script>
+<script  src="{assets_url('theme/js/form-validation-custom.js')}"></script>
+<script type="text/javascript">
+    $(document).on("submit", "#add-form", function(event)
+    {
+        var form = $(this)
+        event.preventDefault();
+        $.ajax({
+            url: "{base_url()}admin/inventory/save_color",
+            type: $(this).attr("method"),
+            dataType: "JSON",
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            beforeSend: function(){
+                $("#add-form .errorMsg").slideUp(500).remove();
+                $("#add-form .fieldErrorMsg").slideUp(500).remove();
+                $("#add-form .help-block").slideUp(500).remove();
+
+
+            },
+            success: function (response, status)
+            {
+                if(response.success){
+                    var errorElement = '<div class="alert alert-success outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-check"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    
+                    form.find('.modal-body').prepend( errorElement );
+                    $("#add-form .errorMsg").fadeTo(2000, 500).slideUp(500, function() {
+                        $("#add-form .errorMsg").slideUp(500)
+                    });
+
+                    form.trigger("reset");
+                    form.removeClass("was-validated");
+                    detailed_table.ajax.reload(null, false );
+                    setTimeout(function(){
+                        $('#modal-product-add').modal('hide')
+                    }, 200);
+                }else{
+
+
+                    var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-thumbs-o-down"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    form.find('.modal-body').prepend( errorElement );
+
+                    $.each(response.error, function(field, msg){
+                        $('#'+field).parent().append( '<div class="text-danger fieldErrorMsg">'+msg+'.</div>' );
+                    })
+                }
+            },
+            error: function (xhr, desc, err)
+            {
+
+                var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-times-circle-o"></i> <b>'+ desc +': </b>'+ err +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                form.find('.modal-body').prepend( errorElement );
+            }
+        });
+    });
+
+    var detailed_table = $('#dataTable').DataTable({
+
+        'processing': true,
+        'serverSide': true,
+        "autoWidth": false,
+        'serverMethod': 'post', 
+        "pagingType": "full_numbers",
+        "pageLength": 10,
+        "sortable": true,
+
+        "aaSorting": [],
+        "order": [], 
+        "aoColumnDefs": [
+            { "bSortable": false, "aTargets": [0,1,2,3,4,5] },
+            ],
+
+        "columnDefs": [{
+            "targets": 'no-sort',
+            "orderable": false,
+            "order": [],
+        }],
+
+        'ajax': {
+            'url':'{base_url(log_user_type())}/inventory/get_color_details',
+            'type': "POST", 
+            'data' : { 
+                'category_id' : '{$search_arr['category_id']}',
+                'status' : '{$search_arr['status']}',
+                'order_by' : '{$search_arr['order_by']}',  
+            }
+
+        },
+
+        'columns': [
+
+            { data: 'index'},
+            { data: 'name', mRender: function(data, type, row) {
+
+                var  link= '';
+
+                link +='<span class="badge digits" style="background-color:'+row.color_code+'">'+ data +'</span>';
+                
+                return link;
+            }},
+            { data: 'code'},
+            { data: 'status'},
+            { data: 'date'},
+            { data: 'id', mRender: function(data, type, row) {
+
+                var  link= ''
+
+                link +="<a rel='tooltip' title='Edit' class='btn btn-outline-success btn-sm me-3 items_edit' type='button' data-original-title='Edit' data-enc_id='"+row.enc_id+"' >Edit</a>";
+                if(row.status=='active'){
+                 link +="<a rel='tooltip' title='Inactivate' class='btn btn-outline-danger btn-sm me-3 delete_item' type='button' data-original-title='Inactivate' data-enc_id='"+row.enc_id+"' data-status='"+row.status+"'><i class='fa fa-close'></i></a>";
+
+             }else{
+               link +="<a rel='tooltip' title='Activate' class='btn btn-outline-info btn-sm me-3 delete_item' type='button' data-original-title='Activate' data-enc_id='"+row.enc_id+"'  data-status='"+row.status+"'><i class='fa fa-check'></i></a>";
+           }
+            link +="<a rel='tooltip' title='Delete' class='btn btn-outline-danger btn-sm me-3 items_delete' type='button' data-original-title='Edit' data-enc_id='"+row.enc_id+"' ><i class='fa fa-trash'></i></a>";
+           return link;
+       }}, 
+       ],
+        success: function(response) { 
+        } 
+    });
+
+
+    $(document).on("submit", "#edit-form", function(event)
+    {
+        var form = $(this)
+        event.preventDefault();
+        $.ajax({
+            url: "{base_url()}admin/inventory/save-color",
+            type: $(this).attr("method"),
+            dataType: "JSON",
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            beforeSend: function(){
+                $("#edit-form .errorMsg").slideUp(500).remove();
+                $("#edit-form .fieldErrorMsg").slideUp(500).remove();
+
+            },
+            success: function (response, status)
+            {
+                if(response.success){
+                    var errorElement = '<div class="alert alert-success outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-check"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+
+                    form.find('.modal-body').prepend( errorElement );
+                    $("#edit-form .errorMsg").fadeTo(2000, 500).slideUp(500, function() {
+                        $("#edit-form .errorMsg").slideUp(500)
+                    });
+
+                    form.trigger("reset");
+                    detailed_table.ajax.reload(null, false );
+                    setTimeout(function(){
+                        $('#modal-product-edit').modal('hide')
+                    }, 200);
+                }else{
+
+
+                    var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-thumbs-o-down"></i> '+ response.msg +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                    form.find('.modal-body').prepend( errorElement );
+
+                    $.each(response.error, function(field, msg){
+                        $('.'+field).parent().append( '<div class="text-danger fieldErrorMsg">'+msg+'.</div>' );
+                    })
+                }
+            },
+            error: function (xhr, desc, err)
+            {
+
+                var errorElement = '<div class="alert alert-secondary outline alert-dismissible fade show errorMsg" role="alert"><p><i class="fa fa-times-circle-o"></i> <b>'+ desc +': </b>'+ err +'</p><button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                form.find('.modal-body').prepend( errorElement );
+            }
+        });
+    });
+
+
+    $(document).on("click", ".items_edit", function(event){
+
+        $.ajax({
+            type:'POST',
+            url:"{base_url('admin/inventory/get_color_info')}",
+            data: { id: $(this).data('enc_id')} ,
+            dataType:'json',
+            beforeSend: function(){
+                $('#modal-product-edit').modal('show'); 
+            },
+        })
+        .done(function( response ) {  
+            if(response.success){
+                $('#modal-product-edit .modal-content').html(response.html); 
+
+            }
+
+        }); 
+
+    }); 
+    $(document).on("click", ".delete_item", function(event){
+
+        $.ajax({
+            type:'POST',
+            url:"{base_url('admin/inventory/change_color_status')}",
+            data: { id: $(this).data('enc_id') , status: $(this).data('status')} ,
+            dataType:'json',
+
+        })
+        .done(function( response ) {  
+         if(response.success){
+            detailed_table.ajax.reload(null, false );
+            toastr.success(response.msg, "success: ",{ progressBar:!0 })
+        }else{
+            toastr.error(response.msg, "error: ",{ progressBar:!0 })
+
+        } 
+    }); 
+
+    }); 
+
+
+
+    $(document).on("click", ".items_delete", function(event){
+
+        var val=$(this).data('enc_id');
+        // alert(val);
+        $.ajax({
+            type:'POST',
+            url:"{base_url('admin/inventory/deleteColorManagement')}",
+            data: { id: val} ,
+            dataType:'json',
+           
+        })
+        .done(function( response ) {  
+            if(response.status){
+                detailed_table.ajax.reload(null,false);
+                toastr.success(response.msg,'success:')
+            }
+            else{
+                toastr.error(response.msg, "error: ",{ progressBar:!0 })
+
+            }    
+
+           
+        }); 
+
+    }); 
+
+
+</script>
+{/block}

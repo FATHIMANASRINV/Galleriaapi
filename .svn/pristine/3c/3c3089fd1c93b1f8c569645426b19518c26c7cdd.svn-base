@@ -1,0 +1,396 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Business extends Base_Controller {
+
+	function __construct()
+	{
+		parent::__construct(); 	
+	}
+
+	public function credit_debit_amount()
+	{    
+
+		$this->load->model('Calculation_model');
+		$log_user_id = log_user_id(); 
+		$date_of_submission = date("Y-m-d H:i:s");
+		
+		if ($this->input->post('credit_amount') && $this->validate_add_deduct_amount()) {
+			
+			$this->load->config('ssl');
+			if($this->config->item('demo_mode'))
+			{ 
+				$this->redirect( lang('site_under_maintenance'), "business/credit-debit-amount", FALSE);
+			} 
+
+			$post_arr = $this->input->post(NULL, TRUE); 
+			$this->Business_model->begin();
+			
+			$comm = [
+				'user_id' => $post_arr['user_name'],
+				'total_amount' => $post_arr['amount'],
+				'date_of_submission' => $date_of_submission,
+				'from_id' => log_user_id(),
+				'transaction_note' => 'add_fund',
+				'fund_transfer_type' => 'credit',
+			];
+
+			$up_date=$this->Calculation_model->insertCommissionDetails( $comm,'add_deduct_fund','add_fund');
+
+			if ($up_date) {
+				$this->Business_model->commit();                         
+				$data = serialize($post_arr);
+				$this->Base_model->insertIntoActivityHistory($post_arr['user_name'], $log_user_id, 'fund_credited_user_wallet',$data,$post_arr['amount']);                       
+
+				$msg = lang('fund_credited_successfully');
+				$this->redirect($msg, 'business/credit-debit-amount', TRUE);
+			} else {
+				$this->Business_model->rollback();
+				$msg = lang('error_on_crediting_fund');
+				$this->redirect($msg, 'business/credit-debit-amount', FALSE);
+			}
+
+
+		}
+
+		if ($this->input->post('debit_amount') && $this->validate_add_deduct_amount()) {
+
+			$this->load->config('ssl');
+			if($this->config->item('demo_mode'))
+			{ 
+				$this->redirect( lang('site_under_maintenance'), "business/credit-debit-amount", FALSE);
+			} 
+
+			$post_arr = $this->input->post(NULL, TRUE);   
+
+			$bal_amount = $this->Base_model->getUserWallet($post_arr['user_name']);
+
+			if ($bal_amount >= $post_arr['amount']) {
+				$this->Business_model->begin();
+
+				$comm = [
+					'user_id' => $post_arr['user_name'],
+					'total_amount' => -$post_arr['amount'],
+					'date_of_submission' => $date_of_submission,
+					'from_id' => log_user_id(),
+					'transaction_note' => 'deduct_fund',
+					'fund_transfer_type' => 'debit',
+				];
+
+				$up_date = $this->Calculation_model->insertCommissionDetails( $comm,'add_deduct_fund','deduct_fund'); 
+
+
+				if ($up_date) {
+					$this->Business_model->commit();
+					$data = serialize($post_arr);
+					$this->Base_model->insertIntoActivityHistory($post_arr['user_name'],$log_user_id, 'amount_deducted_from_user_ewallet',$data,$post_arr['amount']);                       
+					$msg = lang('fund_debited_successfully');
+					$this->redirect($msg, 'business/credit-debit-amount', TRUE);
+				} else {
+					$this->Business_model->rollback();
+					$msg = lang('error_on_debiting_fund');
+					$this->redirect($msg, 'business/credit-debit-amount', FALSE);
+				}
+			} else {
+				$msg = lang('error_on_debit_amount_check_the_amount');
+				$this->redirect($msg, 'business/credit-debit-amount', FALSE);
+			} 
+		}
+		$data['title'] = lang('credit_debit');
+		$this->loadView($data);
+	}
+
+	public function validate_add_deduct_amount() {
+
+		$this->form_validation->set_rules('user_name', lang('user_name'), 'required');
+		$this->form_validation->set_rules('amount', lang('amount'), 'required|greater_than[0]|numeric');
+		$result =  $this->form_validation->run();
+		return $result;
+	}
+
+	function fund_transfer()
+	{
+		
+		$log_user_id = log_user_id();
+
+		if($this->input->post('send') && $this->validate_transfer())
+		{
+			$this->load->config('ssl');
+			if($this->config->item('demo_mode'))
+			{ 
+				$this->redirect( lang('site_under_maintenance'), "business/fund-transfer", FALSE);
+			} 
+
+			$date_of_submission = date('Y-m-d H:i:s');
+			$post_arr = $this->input->post();   
+			$current_balance = $this->Base_model->getUserWallet($post_arr["from_user"]);
+			if( $post_arr["amount"] > $current_balance )
+			{
+				$msg = lang("text_invalid_amount");
+				$this->redirect($msg, "business/fund-transfer", FALSE);
+			}
+			else if(!$this->Business_model->isSecurePinValid($log_user_id,$post_arr["security_pin"]))
+			{
+				$msg = lang("text_invalid_security_pass");
+				$this->redirect($msg, "business/fund-transfer", FALSE);
+			}
+
+			$this->Business_model->begin();
+			
+			$this->load->model('Calculation_model');
+
+			$comm = [
+				'user_id' => $post_arr["to_user"],
+				'total_amount' => $post_arr["amount"],
+				'date_of_submission' => $date_of_submission,
+				'from_id' => $post_arr["from_user"],
+				'transaction_note' => $post_arr['trans_note'],
+				'fund_transfer_type' => 'credit',
+			];
+			$amount_added = $this->Calculation_model->insertCommissionDetails( $comm,'fund_transfer','fund_transfer'); 
+
+			$comm = [
+				'user_id' => $post_arr["from_user"],
+				'total_amount' => -$post_arr["amount"],
+				'date_of_submission' => $date_of_submission,
+				'from_id' => $post_arr["to_user"],
+				'transaction_note' => $post_arr['trans_note'],
+				'fund_transfer_type' => 'debit',
+			];
+			$amount_deducted = $this->Calculation_model->insertCommissionDetails( $comm,'fund_transfer','fund_transfer'); 
+
+			if ($amount_added && $amount_deducted) {
+				$this->Business_model->commit();
+
+				$this->Base_model->insertIntoActivityHistory( $post_arr["to_user"], log_user_id(), 'fund_transfer_by_admin', serialize($post_arr), $post_arr["amount"] );                       
+				$msg = lang('fund_transfered_successfully');
+				$this->redirect($msg, 'business/fund-transfer', TRUE);
+
+			} else {
+				$this->Business_model->rollback();
+				$msg = lang('error_on_fund_transferring');
+				$this->redirect($msg, 'business/fund-transfer', FALSE);
+			}
+		}
+
+		$data['title'] = lang('fund_transfer');
+		$this->loadView($data);
+	}
+
+	public function validate_transfer() {
+		$this->form_validation->set_rules('from_user', lang('from_user'), 'required|is_exist[user_info.user_id]');
+		$this->form_validation->set_rules('to_user', lang('to_user'), 'required|is_exist[user_info.user_id]|differs[from_user]');
+		$this->form_validation->set_rules('amount', lang('amount'), 'required|greater_than[0]');
+		$this->form_validation->set_rules('security_pin', lang('security_pin'), 'required');
+
+		$result =  $this->form_validation->run();
+		return $result;
+	}
+
+	function user_account_details()
+	{
+		$show_status = FALSE;
+		$account_details = array();
+
+		$user_id = $this->input->get('user_id');
+		if(!isset($user_id)){
+			$user_id = log_user_id(); 
+		}
+		else{
+			$user_id = $this->Base_model->encrypt_decrypt('decrypt',$user_id);
+		}
+		$user_name = $this->Base_model->getUserName($user_id);
+		if($this->input->post('view_details') && $this->validate_user_account())
+		{
+			$show_status = TRUE;
+			$post_arr = $this->input->post(); 
+			$user_name = $post_arr['user_name']; 
+			$account_details = $this->Business_model->getAccountDetails($user_id, $category_id);
+			$data['user_total_amount'] = $account_details["user_total_amount"];
+			unset($account_details["user_total_amount"]);
+			$data['category_id'] = $post_arr['category'];
+		}
+
+		$category_details = $this->Business_model->getCategoryDetails(); 
+
+		$data['show_status'] = $show_status;
+		$data['account_details'] = $account_details;
+		$data['category_details'] = $category_details;
+		$data['user_id'] = $user_id;
+		$data['user_name'] = $user_name;
+
+		$data['title'] = lang('text_user_account_details');
+		$this->loadView($data);
+
+	}
+
+	function validate_user_account()
+	{
+		$this->form_validation->set_rules('user_name', lang('text_user'), 'trim|required'); 
+		$this->form_validation->set_rules('category', lang('text_category'), 'trim|required');
+		$this->form_validation->set_error_delimiters("<div style='color:#b94a48;'>", '</div>');
+		$this->form_validation->set_message('alpha_dash_space', lang('characters_only'));
+		$validation_result = $this->form_validation->run();
+
+		return $validation_result;
+	}
+
+	public function wallets_summary() {
+
+		$data['title'] = lang('wallet_summary');
+		$this->load->model('Dashboard_model');
+		$user_wallet = $this->Dashboard_model->getUserWalletDetails(log_user_id());
+		$data['credit']=$user_wallet['referral_bonus']+$user_wallet['level_bonus']+$user_wallet['add_fund']+$user_wallet['rank_bonus'];
+		$data['debit']=abs($user_wallet['wallet_withdrawal'])+abs($user_wallet['ewallet_register'])+abs($user_wallet['deduct_fund'])+abs($user_wallet['fund_transfer'])+abs($user_wallet['payout_delete'])+abs($user_wallet['payout_request']);
+		$data['user_wallet']=$user_wallet;
+		$this->loadView($data);
+	}
+
+	function get_amount_words() {
+
+		if($this->input->is_ajax_request()){
+			$post = $this->input->post();
+			$amount =$post['amount'];
+			$words = $this->Base_model->numberTowords($amount);
+			echo $words;
+		}
+	}
+
+	function payout_release($action='',$id='')	
+	{
+		$post_arr = [];
+		if ($this->input->post('submit') == 'search')
+		{
+			$post_arr = $this->input->post();
+			$post_arr['user_id'] = '';
+			if(element('user_name',$post_arr)) {
+				$user_name = $post_arr['user_name'];
+				$post_arr['user_id'] = $this->Base_model->getUserId($user_name);
+			}
+		}
+
+		$data['post_arr'] = $post_arr;
+
+		$user_name = log_user_name();
+		$user_id = log_user_id();	
+		$data['user_name'] = $user_name;
+		$data['user_id'] = $user_id;
+		$data['title'] = lang('payout_release');
+		$this->loadView($data);
+
+	}
+
+	public function get_payout_requests_ajax() {
+		if ($this->input->is_ajax_request()) {
+			
+			$post_arr = $this->input->post();
+			$count_without_filter = $this->Business_model->getPayoutCount();
+			$count_with_filter = $this->Business_model->getPayoutAjax($post_arr, 1);
+			$details = $this->Business_model->getPayoutAjax( $post_arr,'');
+			$response = array(
+				"iTotalRecords" => $count_without_filter,
+				"iTotalDisplayRecords" => $count_with_filter,
+				"aaData" => $details,
+			);
+
+			echo json_encode($response);
+		} 
+	}
+
+	function payout_approve_ajax() {
+
+		if ($this->input->is_ajax_request() ) {
+			
+			$post = $this->input->post(); 
+			$single_data = $this->Business_model->getPayoutById($post['id']);
+
+			$total_amount = $single_data['amount'] - $single_data['amount']*$single_data['transaction_fee']/100 ;
+			$this->Business_model->begin();
+			$add = $this->Base_model->addUserWalletDetails($single_data['user_id'], $single_data['amount'],'wallet_withdrawal');
+			$approve = $this->Business_model->updatePayout($post['id'],'released'); 
+			$package_id = $this->Base_model->getUserInfoField('package_id',$single_data['user_id']);
+			$update_payout=$this->Business_model->updatePayoutPackageDetails($package_id,$single_data['amount']);
+
+			if($approve && $add && $update_payout)
+			{
+				$this->Business_model->commit();
+				$this->Base_model->insertIntoActivityHistory( $single_data['user_id'], log_user_id(), 'payout_requested_amount_to', serialize($single_data), $single_data['amount'] );
+				$response['success'] = TRUE;
+				$response['msg'] = lang('payout_requested_approved');
+				$this->set_session_flash_data( $response['msg'], $response['success']  );
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+
+			}else{
+				$this->Business_model->rollback();
+				$response['success'] = FALSE;
+				$response['msg'] = lang('error_approving_request');
+				$this->set_session_flash_data( $response['msg'], $response['success']  );
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		}
+	}
+	function payout_reject_ajax() {
+
+		if ($this->input->is_ajax_request() ) {			
+			$post = $this->input->post();
+
+			$single_data = $this->Business_model->getPayoutById($post['id']);	
+			$total_amount = $single_data['amount'];
+			$delete = $this->Business_model->updatePayout($post['id'],'deleted');
+
+			$this->load->model('Calculation_model');
+			$comm = [
+				'user_id' => $single_data['user_id'],
+				'total_amount' => $total_amount,
+				'date_of_submission' => date('Y-m-d H:i:s'),
+				'from_id' => $single_data['user_id'],
+				'transaction_note' => 'payout_delete',
+				'fund_transfer_type' => 'debit',
+			];
+			$deduct = $this->Calculation_model->insertCommissionDetails( $comm,'payout_fund','payout_delete'); 
+			
+			if($deduct && $delete)
+			{
+				$this->Business_model->commit();
+				$this->Base_model->insertIntoActivityHistory( $single_data['user_id'], log_user_id(), 'payout_deleted_amount_to', serialize($comm), $single_data['amount'] );
+				$response['success'] = TRUE;
+				$response['msg'] = lang('payout_requested_deleted');
+				$this->set_session_flash_data( $response['msg'], $response['success']  );
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+
+			}else{
+				$this->Business_model->rollback();
+				$response['success'] = FALSE;
+				$response['msg'] = lang('error_deleting_request');
+				$this->set_session_flash_data( $response['msg'], $response['success']  );
+
+				$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+				->_display();
+				exit();
+			}
+		}
+	}
+
+
+	
+}

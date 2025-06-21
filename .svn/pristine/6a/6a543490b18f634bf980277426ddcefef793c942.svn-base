@@ -1,0 +1,112 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+{/block}
+{block name="body"}
+
+<div class="row">
+	<div class="col-md-8">
+		<div class="card">
+
+			<div class="card-header">
+
+				<h5 class="mb-0" data-anchor="data-anchor">{lang('fund_transfer')}</h5>
+
+			</div>
+			<div class="card-body ">
+
+				{form_open('','role="form"  class="row g-3 needs-validation" method="post" name="compose" id="compose" novalidate=""')}
+
+
+				<div class="col-md-6">
+					<div class="form-group">
+						<label class="form-label">{lang('from_user')}</label>
+
+						<div class="controls">
+							<input type="text" class="form-control" name="from_user" id="from_user" value="{if $id}{$user}{else}{$user_name}{/if}" autocomplete="off" readonly="">
+							{form_error('from_user')} 
+
+						</div>
+					</div>
+
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+						<label class="form-label">{lang('to_user')}</label>
+
+						<div class="controls">
+							<input type="text" class="form-control" name="to_user" id="to_user" value="{set_value('to_user')}" autocomplete="off"  required>
+							<div class="invalid-feedback">{lang('user_id_required')}</div>
+							{form_error('to_user')} 
+
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-6">
+					<div class="form-group">
+						<label class="form-label" for="validationCustomUsername">{lang('amount')}</label>
+
+						<div class="controls">
+							<input type="number" class="form-control" name="amount" value="{set_value('amount')}" autocomplete="off" required> 
+							<div class="invalid-feedback">{lang('enter_an_amount')}</div>
+
+							{form_error("amount")}
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="form-group">
+						<label class="form-label" for="validationCustomUsername">{lang('security_pin')}</label>
+
+						<div class="controls">
+							<input type="password" class="form-control" name="security_pin" value="" autocomplete="off" required> 
+							<div class="invalid-feedback">{lang('security_password_is_required')}</div>
+
+							{form_error("security_pin")}
+						</div>
+					</div>
+				</div>
+				<div class="col-md-12">
+					<div class="form-group">
+						<label class="form-label">{lang('transaction_note')}</label>
+						<div class="controls">
+							<input class="form-control"  name="trans_note" type="text" value="{set_value('trans_note')}" autocomplete="off" required />
+							<div class="invalid-feedback">{lang('transaction_note_is_required')}</div>
+							{form_error("trans_note")}
+						</div>
+					</div>
+				</div>
+
+
+
+				<div class="col-12">
+					<button type="submit" class="btn btn-primary" name="send" value="send" id="send">{lang('send')}<i class="fa fa-arrow-circle-right"></i></button>
+
+				</div>
+				{form_close()}
+			</div>
+		</div>
+	</div>
+	{if !$id}
+	<div class="col-md-4">
+		<div class="card">
+			<div class="card-header">
+
+				<h5 class="mb-0" data-anchor="data-anchor">{lang('Qrcode Scanner')}</h5>
+
+			</div>
+			<div class="card-body ">
+				<img src="{assets_url()}images/qrcode/{log_user_name()}.png" height="" width="" class="img-thumbnail">
+			</div>
+		</div>
+	</div>
+	{/if}
+</div>
+{/block}
+{block name="footer"}
+
+
+
+
+
+{/block}

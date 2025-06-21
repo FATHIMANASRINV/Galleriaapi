@@ -1,0 +1,111 @@
+	{extends file="layout/base.tpl"}
+	{block name="header"}
+	<style type="text/css">
+		h5{
+			text-align: center;
+		}
+		button{
+			align-items: center;
+			width: 150px;
+		}
+	</style>
+
+	{/block}
+	{block name="body"} 
+	<!-- <div class="card mb-3">
+		<div class="card-body">
+			<div class="row">
+				{foreach $packages as $v}
+				<div class="mb-4 col-md-6 col-lg-4">
+					<div class="border rounded-1 h-100 d-flex flex-column justify-content-between pb-3">
+						<div class="overflow-hidden">
+							<div class="position-relative rounded-top overflow-hidden"><img class="img-fluid rounded-top" src="{assets_url()}images/products/default.svg" alt="" style="width:1000px" /></a>
+							</div>
+							
+							<div class="p-3">
+								<h5 class="fs-0" id="name">{$v.name}</a></h5>
+								<h5 class="fs-md-2 text-warning" id="amount"> {cur_format($v.amount)}								
+								</h5>
+							</div>
+						</div>
+						<div class="text-center px-4">
+
+							<div><button name="submit"  rel="tooltip" class="btn btn-outline-primary buy-package col-sm-12"  data-original-title="buy package" title="buy package" data-toggle="modal" data-target=""  data-whatever="@fat" data-id="{$v.package_id}">{lang('buy_package')}<span class="fas fa-cart-plus"></span> </button></div>
+
+						</div>
+					</div>
+
+				</div>
+				{/foreach}
+			</div>
+		</div>
+	</div>-->
+	<div class="modal fade" id="empModal"  role="dialog" >
+		<div class="modal-dialog mt-6" role="document">
+			<div class="modal-content border-0">
+				<div class="modal-header px-5 position-relative modal-shape-header bg-shape">
+					<div class="position-relative z-index-1 light">
+						<h4 class="mb-0 text-white" id="authentication-modal-label">{lang('package_details')}</h4>
+
+					</div>
+					<button class="btn-close btn-close-white position-absolute top-0 end-0 mt-2 me-2" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">	
+
+				</div> 
+			</div>
+		</div>
+	</div>
+    	{$count=0}
+    <div class="row">
+        {foreach $packages as $v}
+        <div class="col-xs-6 col-sm-6 col-lg-6 col-xl-3">
+            <div class="panel price panel-color">
+                <div class="panel-heading {if $count % 2 == 0}bg-primary{else}bg-danger{/if} p-0 text-center">
+                    <h4 class="text-fixed-white price-heading">{$v.name}</h4>
+                </div>
+                <div class="panel-body text-center">
+                    <p class="lead py-3"><strong>{cur_format($v.amount)}</strong></p>
+                </div>
+                <ul class="list-group list-group-flush text-center">
+                    <li class="list-group-item"><strong>ROI:{$v.roi}%</strong></li>
+                    {foreach $level_details as $l}
+                    <li class="list-group-item"><strong>{lang('level')}-{$l.level_no}=>{$l.level_commission}%</strong></li>
+                    {/foreach}
+                </ul>
+                <div class="panel-footer text-center">
+                	<div><button name="submit"  rel="tooltip" class="{if $count % 2 == 0}btn btn-primary{else}btn btn-danger{/if} buy-package col-sm-12"  data-original-title="buy package" title="buy package" data-toggle="modal" data-target=""  data-whatever="@fat" data-id="{$v.package_id}">{lang('buy_package')}<span class="fas fa-cart-plus"></span> </button></div>
+                </div>
+            </div>
+        </div><!-- COL-END -->
+        <span style="display:none;">{$count++}</span>
+        {/foreach}
+    </div>
+    <!--End::row-3 -->
+	{/block}
+	{block name="footer"}
+	{* <script src="{assets_url()}plugins/jquery-3.2.1.slim.min.js"></script> *}
+	<script src="{assets_url()}backend/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		$('.buy-package').click(function(){
+			
+			var ID = $(this).data('id');
+			$.ajax({
+				url: '{base_url(log_user_type())}/member/package-details',
+				type: 'post',
+				data: { id: ID},
+				success: function(response){  
+					$('.modal-body').html(response.html);
+					$('#empModal').modal('show'); 
+				}
+			});
+
+			$('.modal-body').html('response');
+
+			$('#empModal').modal('show'); 
+		});
+	</script>
+	{* <script src="{assets_url()}plugins/autocomplete/jquery-ui.min.js"></script>	 *}
+	<script src="{assets_url()}backend/js/jquery-3.6.0.min.js"></script>	
+
+	{/block}

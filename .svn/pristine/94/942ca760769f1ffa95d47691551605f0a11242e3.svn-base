@@ -1,0 +1,417 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+
+<style>
+
+    label {
+        margin: 0;
+    }
+
+    .star-container {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: flex-start;
+        justify-content: flex-end;
+    }
+
+    .star-check {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        -o-appearance: none !important;
+        -ms-appearance: none !important;
+        appearance: none !important;
+        width: 18px;
+        height: 18px;
+        background-image: url('https://www.worthschools.net/userfiles/197/my%20files/4-stars.jpg?id=29736');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: right 0;
+        cursor: pointer;
+        outline: 0;
+    }
+
+    .star-check:checked, .star-check:checked~input {
+        background-position: left 0;
+    }
+
+
+</style>
+
+{/block}
+{block name="body"}    
+
+{form_open()}
+<main class="main" id="top">
+    <div class="container" data-layout="container">
+        <script>
+            var isFluid = JSON.parse(localStorage.getItem('isFluid'));
+            if (isFluid)
+            {
+                var container = document.querySelector('[data-layout]');
+                container.classList.remove('container');
+                container.classList.add('container-fluid');
+            }
+        </script>
+
+        <div class="content">
+            {if $messages || $recent_msg}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col d-flex align-items-center">
+                            <div class="form-check mb-0 d-none d-sm-block">
+                                <input class="form-check-input checkbox-bulk-select" type="checkbox" data-bulk-select='{ "body":"emails","actions":"emails-actions" }' />
+
+                            </div>
+                            <button class="btn btn-falcon-default btn-sm ms-scvbm-1" type="button" onclick="location.reload()"><span class="fas fa-redo"></span>
+                            </button>
+                            <div class="dropdown font-sans-serif">
+                                <button class="btn btn-falcon-default text-600 btn-sm dropdown-toggle dropdown-caret-none ms-2" type="button" id="email-filter" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="fas fa-sliders-h"></span>
+                                </button>
+                                <div class="dropdown-menu border py-0" aria-labelledby="email-filter">
+                                    <div class="bg-white dark__bg-dark py-2">
+                                        <a class="dropdown-item d-flex justify-content-between" href="{base_url()}admin/mail/inbox/1">{lang('All')}<span class="fas fa-check" data-fa-transform="down-4 shrink-4"></span></a>
+                                        <a class="dropdown-item" href="{base_url()}admin/mail/inbox/2">{lang('unread')}</a>
+                                        <a class="dropdown-item" href="{base_url()}admin/mail/inbox/3">{lang('Starred')}</a>
+                                        {* <a class="dropdown-item" href="#!">{lang('Flagged')}</a></div> *}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border-start ms-3 ps-3 d-none" id="emails-actions">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-light selectAll" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" name="delete" id="delete" value="delete"><i class="fas fa-trash-alt"></i>
+                                    </button>
+                                    <button class="btn btn-falcon-default" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark as unread"><span class="fas fa-envelope"></span>
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto"><a class="btn btn-falcon-primary btn-sm" href="{base_url()}admin/mail/compose_mail"><span class="fas fa-plus me-1" data-fa-transform="shrink-3"></span>{lang('compose')}</a>
+                        </div>
+                    </div>
+                </div>
+                {if !$con}
+                <div class="card-body fs--1 border-top border-200 p-0" id="emails">
+                    <h5 class="fs-0 px-3 pt-3 pb-2 mb-0 border-bottom border-200">{lang('unread')}</h5>
+
+                    {if $recent_msg}
+                    {foreach $recent_msg as $v}
+                    <div class="row border-bottom border-200 hover-actions-trigger hover-shadow py-2 px-1 mx-0 bg-white dark__bg-dark read" data-href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">
+                        <div class="btn-group btn-group-sm z-index-2 hover-actions end-0 me-3" style="width: 10rem;">
+                            <a class="btn  mt-3" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" name="delete" id="delete" value="delete" href="{base_url('admin/mail/delete_mail/inbox/')}{$v.enc_id}"><i class="fas fa-trash-alt"></i></a>
+                            <button class="btn  mb-4" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark as read"><span class="fas fa-envelope-open"></span></button>
+                        </div>
+                        <div class="col-auto d-none d-sm-block">
+                            <div class="d-flex bg-white dark__bg-dark">
+                                <div class="form-check mb-0 fs-0 mt-3">
+                                    <input class="form-check-input" type="checkbox" id="checkbox-2" data-bulk-select-row="data-bulk-select-row" name="checkbox[]" value="{$v.id}"/>
+                                </div>
+                                <input type="checkbox" name="starcheck" class="star-check favorite" title="star" data-mailid ="{$v.enc_id}" {if $v.starred}checked{/if}>
+                            </div>
+                        </div>
+                        <div class="col col-md-9 col-xxl-10">
+                            <div class="row">
+                                <div class="col-md-4 col-xl-3 col-xxl-2 ps-md-0 mb-1 mb-md-0">
+                                    <div class="d-flex position-relative">
+                                        <div class="avatar avatar-s">
+                                            <img class="rounded-soft" src="{assets_url('images/profile/')}{$v.profile_pic}" alt="" />
+
+                                        </div>
+                                        <div class="flex-1 ms-2"><a class="fw-bold stretched-link inbox-link" href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">{$v.user_name}</a><span class="badge badge-soft-success badge-pill ms-2">{lang('new')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col"><a class="d-block inbox-link"  href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1"><span class="fw-bold">{$v.subject}</span><span class="mx-1">&ndash;</span><span>{strip_tags({$v.message1})}...</span></a>
+                                    {if $v.attachment}
+                                    <a class="d-inline-flex align-items-center border rounded-pill px-3 py-1 me-2 mt-2 inbox-link" href="{assets_url('images/attachments/')}{$v.attachment}" data-gallery="gallery-7"><span class="fas fa-image text-danger" data-fa-transform="grow-4"></span><span class="ms-2">{assets_url('images/attachments/')}{$v.attachment}</span></a>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex flex-column justify-content-between"><span class="fw-bold">{$v.date}</span><span class="fas text-warning fa-star ms-auto mb-2 d-sm-none" data-fa-transform="down-7"></span></div>
+                    </div>
+                    {/foreach}
+                    {else}
+                    <h7 class="fs-0 px-3 pt-3 pb-2 mb-0">{lang('no_unread')}</h7>
+                    {/if}
+
+
+                    {if $messages}
+                    {foreach $messages as $v}
+                    <div class="row border-bottom border-200 hover-actions-trigger hover-shadow py-2 px-1 mx-0 bg-light" data-href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">
+                        <div class="btn-group btn-group-sm z-index-2 hover-actions end-0 me-3" style="width: 10rem;">
+                            <a class="btn btn-light " type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" name="delete" id="delete" value="delete" href="{base_url('admin/mail/delete_mail/inbox/')}{$v.enc_id}"><i class="fas fa-trash-alt"></i></a>
+                            <button class="btn btn-light mb-5" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark as unread"><span class="fas fa-envelope"></span></button>
+                        </div>
+                        <div class="col-auto d-none d-sm-block">
+                            <div class="d-flex bg-light">
+                                <div class="form-check mb-0 fs-0 mt-1">
+                                    <input class="form-check-input" type="checkbox" id="checkbox-1" data-bulk-select-row="data-bulk-select-row" name="checkbox[]" value="{$v.id}"/>
+                                </div>
+                                <input type="checkbox" name="starcheck" class="star-check favorite" title="star" data-mailid ="{$v.enc_id}" {if $v.starred}checked{/if}>
+                            </div>
+                        </div>
+                        <div class="col col-md-9 col-xxl-10">
+                            <div class="row">
+                                <div class="col-md-4 col-xl-3 col-xxl-2 ps-md-0 mb-1 mb-md-0">
+                                    <div class="d-flex position-relative">
+                                        <div class="avatar avatar-s">
+                                            <img class="rounded-soft" src="{assets_url('images/profile/')}{$v.profile_pic}" alt="" />
+
+                                        </div>
+                                        <div class="flex-1 ms-2"><a class="stretched-link inbox-link" href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">{$v.user_name}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col"><a class="d-block inbox-link" href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1"><span>{$v.subject}</span><span class="mx-1">&ndash;</span><span>{strip_tags({$v.message1})}...</span></a>
+                                    {if $v.attachment}
+                                    <a class="d-inline-flex align-items-center border rounded-pill px-3 py-1 me-2 mt-2 inbox-link" href="{assets_url('images/attachments/')}{$v.attachment}" data-gallery="gallery-7"><span class="fas fa-image text-danger" data-fa-transform="grow-4"></span><span class="ms-2">{assets_url('images/attachments/')}{$v.attachment}</span></a>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex flex-column justify-content-between"><span>{$v.date}</span><span class="fas text-warning fa-star ms-auto mb-2 d-sm-none" data-fa-transform="down-7"></span></div>
+                    </div>
+                    {/foreach}
+                    {/if}
+                    {/if}
+
+                    {if $con==1}
+                    <div class="card-body fs--1 border-top border-200 p-0" id="emails">
+                        <h5 class="fs-0 px-3 pt-3 pb-2 mb-0 border-bottom border-200">{lang('all_messages')}</h5>
+                        {if $all}
+                        {foreach $all as $v}
+                        <div class="row border-bottom border-200 hover-actions-trigger hover-shadow py-2 px-1 mx-0 bg-white dark__bg-dark read" data-href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">
+
+                            <div class="btn-group btn-group-sm z-index-2 hover-actions end-0 me-3" style="width: 10rem;">
+                                <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Archive"><span class="fas fa-archive"></span></button>
+                                <a class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" name="delete" id="delete" value="delete" href="{base_url('admin/mail/delete_mail/inbox/')}{$v.enc_id}"><i class="fas fa-trash-alt"></i></a>
+                                <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark as read"><span class="fas fa-envelope-open"></span></button>
+                                <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Snooze"><span class="fas fa-clock"></span></button>
+                            </div>
+                            <div class="col-auto d-none d-sm-block">
+                                <div class="d-flex bg-white dark__bg-dark">
+                                    <div class="form-check mb-0 fs-0">
+                                        <input class="form-check-input" type="checkbox" id="checkbox-2" data-bulk-select-row="data-bulk-select-row" name="checkbox[]" value="{$v.id}" />
+                                    </div>
+                                    <input type="checkbox" name="starcheck" class="star-check favorite" title="star" data-mailid ="{$v.enc_id}" {if $v.starred}checked{/if}>
+                                </div>
+                            </div>
+                            <div class="col col-md-9 col-xxl-10">
+                                <div class="row">
+                                    <div class="col-md-4 col-xl-3 col-xxl-2 ps-md-0 mb-1 mb-md-0">
+                                        <div class="d-flex position-relative">
+                                            <div class="avatar avatar-s">
+                                                <img class="rounded-soft" src="{assets_url('images/profile/')}{$v.profile_pic}" alt="" />
+
+                                            </div>
+                                            <div class="flex-1 ms-2"><a class="fw-bold stretched-link inbox-link" href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">{$v.user_name}</a><span class="badge badge-soft-success badge-pill ms-2">{lang('new')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col"><a class="d-block inbox-link"  href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1"><span class="fw-bold">{$v.subject}</span><span class="mx-1">&ndash;</span><span>{strip_tags({$v.message1})}...</span></a>
+                                        {if $v.attachment}
+                                        <a class="d-inline-flex align-items-center border rounded-pill px-3 py-1 me-2 mt-2 inbox-link" href="{assets_url('images/attachments/')}{$v.attachment}" data-gallery="gallery-7"><span class="fas fa-image text-danger" data-fa-transform="grow-4"></span><span class="ms-2">{assets_url('images/attachments/')}{$v.attachment}</span></a>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto ms-auto d-flex flex-column justify-content-between"><span class="fw-bold">{$v.date}</span><span class="fas text-warning fa-star ms-auto mb-2 d-sm-none" data-fa-transform="down-7"></span></div>
+                        </div>
+                        {/foreach}
+                        {else}
+                        <h7 class="fs-0 px-3 pt-3 pb-2 mb-0">{lang('no_emails')}</h7>
+
+                        {/if}
+                        {/if}
+                        {if $con==2}
+                        <div class="card-body fs--1 border-top border-200 p-0" id="emails">
+                            <h5 class="fs-0 px-3 pt-3 pb-2 mb-0 border-bottom border-200">{lang('unread_messages')}</h5>
+                            {if $recent_msg}
+                            {foreach $recent_msg as $v}
+                            <div class="row border-bottom border-200 hover-actions-trigger hover-shadow py-2 px-1 mx-0 bg-white dark__bg-dark read" data-href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">
+                             <div class="btn-group btn-group-sm z-index-2 hover-actions end-0 me-3" style="width: 10rem;">
+                                <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Archive"><span class="fas fa-archive"></span></button>
+                                <a class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete1" name="delete" id="delete" value="delete" href="{base_url('admin/mail/delete_mail/inbox/')}{$v.enc_id}"><i class="fas fa-trash-alt"></i></a>
+                                <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark as read"><span class="fas fa-envelope-open"></span></button>
+                                <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Snooze"><span class="fas fa-clock"></span></button>
+                            </div>
+                            <div class="col-auto d-none d-sm-block">
+                                <div class="d-flex bg-white dark__bg-dark">
+                                    <div class="form-check mb-0 fs-0">
+                                        <input class="form-check-input" type="checkbox" id="checkbox-2" data-bulk-select-row="data-bulk-select-row" name="checkbox[]" value="{$v.id}"/>
+                                    </div>
+                                    <input type="checkbox" name="starcheck" class="star-check favorite" title="star" data-mailid ="{$v.enc_id}" {if $v.starred}checked{/if}>
+                                </div>
+                            </div>
+                            <div class="col col-md-9 col-xxl-10">
+                                <div class="row">
+                                    <div class="col-md-4 col-xl-3 col-xxl-2 ps-md-0 mb-1 mb-md-0">
+                                        <div class="d-flex position-relative">
+                                            <div class="avatar avatar-s">
+                                                <img class="rounded-soft" src="{assets_url('images/profile/')}{$v.profile_pic}" alt="" />
+
+                                            </div>
+                                            <div class="flex-1 ms-2"><a class="fw-bold stretched-link inbox-link" href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">{$v.user_name}</a><span class="badge badge-soft-success badge-pill ms-2">{lang('new')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col"><a class="d-block inbox-link"  href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1"><span class="fw-bold">{$v.subject}</span><span class="mx-1">&ndash;</span><span>{strip_tags({$v.message1})}...</span></a>
+                                        {if $v.attachment}
+                                        <a class="d-inline-flex align-items-center border rounded-pill px-3 py-1 me-2 mt-2 inbox-link" href="{assets_url('images/attachments/')}{$v.attachment}" data-gallery="gallery-7"><span class="fas fa-image text-danger" data-fa-transform="grow-4"></span><span class="ms-2">{assets_url('images/attachments/')}{$v.attachment}</span></a>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto ms-auto d-flex flex-column justify-content-between"><span class="fw-bold">{$v.date}</span><span class="fas text-warning fa-star ms-auto mb-2 d-sm-none" data-fa-transform="down-7"></span></div>
+                        </div>
+                        {/foreach}
+                        {else}
+                        <h7 class="fs-0 px-3 pt-3 pb-2 mb-0">{lang('no_unread')}</h7>
+
+                        {/if}
+                        {/if}
+                        {if $con==3}
+                        <div class="card-body fs--1 border-top border-200 p-0" id="emails">
+                            <h5 class="fs-0 px-3 pt-3 pb-2 mb-0 border-bottom border-200">{lang('Starred Mails')}</h5>
+                            {if $starred}
+                            {foreach $starred as $v}
+                            <div class="row border-bottom border-200 hover-actions-trigger hover-shadow py-2 px-1 mx-0 bg-white dark__bg-dark read" data-href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">
+
+                                <div class="btn-group btn-group-sm z-index-2 hover-actions end-0 me-3" style="width: 10rem;">
+                                    <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Archive"><span class="fas fa-archive"></span></button>
+                                    <a class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" name="delete" id="delete" value="delete" href="{base_url('admin/mail/delete_mail/inbox/')}{$v.enc_id}"><i class="fas fa-trash-alt"></i></a>
+                                    <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark as read"><span class="fas fa-envelope-open"></span></button>
+                                    <button class="btn btn-light" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Snooze"><span class="fas fa-clock"></span></button>
+                                </div>
+                                <div class="col-auto d-none d-sm-block">
+                                    <div class="d-flex bg-white dark__bg-dark">
+                                        <div class="form-check mb-0 fs-0">
+                                            <input class="form-check-input" type="checkbox" id="checkbox-2" data-bulk-select-row="data-bulk-select-row" name="checkbox[]" value="{$v.id}" />
+                                        </div>
+                                        <input type="checkbox" name="starcheck" class="star-check favorite" title="star" data-mailid ="{$v.enc_id}" {if $v.starred}checked{/if}>
+                                    </div>
+                                </div>
+                                <div class="col col-md-9 col-xxl-10">
+                                    <div class="row">
+                                        <div class="col-md-4 col-xl-3 col-xxl-2 ps-md-0 mb-1 mb-md-0">
+                                            <div class="d-flex position-relative">
+                                                <div class="avatar avatar-s">
+                                                    <img class="rounded-soft" src="{assets_url('images/profile/')}{$v.profile_pic}" alt="" />
+
+                                                </div>
+                                                <div class="flex-1 ms-2"><a class="fw-bold stretched-link inbox-link" href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1">{$v.user_name}</a><span class="badge badge-soft-success badge-pill ms-2">{lang('new')}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col"><a class="d-block inbox-link"  href="{base_url()}admin/mail/email_detail/{$v.enc_id}/1"><span class="fw-bold">{$v.subject}</span><span class="mx-1">&ndash;</span><span>{strip_tags({$v.message1})}...</span></a>
+                                            {if $v.attachment}
+                                            <a class="d-inline-flex align-items-center border rounded-pill px-3 py-1 me-2 mt-2 inbox-link" href="{assets_url('images/attachments/')}{$v.attachment}" data-gallery="gallery-7"><span class="fas fa-image text-danger" data-fa-transform="grow-4"></span><span class="ms-2">{assets_url('images/attachments/')}{$v.attachment}</span></a>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto ms-auto d-flex flex-column justify-content-between"><span class="fw-bold">{$v.date}</span><span class="fas text-warning fa-star ms-auto mb-2 d-sm-none" data-fa-transform="down-7"></span></div>
+                            </div>
+                            {/foreach}
+                            {else}
+                            <h7 class="fs-0 px-3 pt-3 pb-2 mb-0">{lang('no_starred')}</h7>
+
+                            {/if}
+                            {/if}
+                            {*   <div class="card-footer d-flex justify-content-between align-items-center"><small>2.29 GB <span class="d-none d-sm-inline-block">(13%)  </span> of 17 GB used</small> *}
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal fade" id="authentication-modal" tabindex="-1" role="dialog" aria-labelledby="authentication-modal-label" aria-hidden="true">
+                        <div class="modal-dialog mt-6" role="document">
+                            <div class="modal-content border-0">
+                                <div class="modal-header px-5 position-relative modal-shape-header bg-shape">
+                                    <div class="position-relative z-index-1 light">
+                                        <h4 class="mb-0 text-white" id="authentication-modal-label">{lang('register')}</h4>
+                                        <p class="fs--1 mb-0 text-white">{lang('please_create')}</p>
+                                    </div>
+                                    <button class="btn-close btn-close-white position-absolute top-0 end-0 mt-2 me-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body py-4 px-5">
+                                    <div class="mb-3">
+                                        <label class="form-label" for="modal-auth-name">{lang('name')}</label>
+                                        <input class="form-control" type="text" autocomplete="on" id="modal-auth-name" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="modal-auth-email">{lang('email_address')}</label>
+                                        <input class="form-control" type="email" autocomplete="on" id="modal-auth-email" />
+                                    </div>
+                                    <div class="row gx-2">
+                                        <div class="mb-3 col-sm-6">
+                                            <label class="form-label" for="modal-auth-password">{lang('password')}</label>
+                                            <input class="form-control" type="password" autocomplete="on" id="modal-auth-password" />
+                                        </div>
+                                        <div class="mb-3 col-sm-6">
+                                            <label class="form-label" for="modal-auth-confirm-password">{lang('confirm_password')}</label>
+                                            <input class="form-control" type="password" autocomplete="on" id="modal-auth-confirm-password" />
+                                        </div>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="modal-auth-register-checkbox" />
+                                        <label class="form-label" for="modal-auth-register-checkbox">{lang('i_accept')} <a href="#!">{lang('terms')} </a>{lang('and')} <a href="#!">{lang('privacy_policy')}</a></label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <button class="btn btn-primary d-block w-100 mt-3" type="submit" name="submit">{lang('register')}</button>
+                                    </div>
+                                    <div class="position-relative mt-5">
+                                        <hr class="bg-300" />
+                                        <div class="divider-content-center">{lang('or_register')}</div>
+                                    </div>
+                                    <div class="row g-2 mt-2">
+                                        <div class="col-sm-6"><a class="btn btn-outline-google-plus btn-sm d-block w-100" href="#"><span class="fab fa-google-plus-g me-2" data-fa-transform="grow-8"></span> {lang('google')}</a></div>
+                                        <div class="col-sm-6"><a class="btn btn-outline-facebook btn-sm d-block w-100" href="#"><span class="fab fa-facebook-square me-2" data-fa-transform="grow-8"></span> {lang('facebook')}</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {else}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5>{lang('inbox')}</h5>
+                        </div>
+                        <div class="card-body fs--1 border-top border-200 p-0 text-center">
+                            <br><h6>{lang(no_emails)}</h6><br>
+                        </div>
+                    </div>
+                    {/if}
+                </div>
+            </main>
+            {form_close()}
+            {/block}
+            {block name="footer"}
+            <script type="text/javascript">
+
+                $(document).ready(function(){
+
+                    $('.selectAll').change( function(){
+                        $('input[type="checkbox"]').prop('checked', this.checked);
+                    })
+                });
+
+                $('.favorite').change(function(){
+                    var checkBox = $(this).is(':checked');
+                    var id = $(this).data('mailid');
+
+                    if (checkBox){
+                        document.location.href = "{base_url()}admin/mail/star_message/inbox/1/"+id;
+                    } else {
+                        document.location.href = "{base_url()}admin/mail/star_message/inbox/0/"+id;
+                    }
+
+                })
+
+            </script>
+            {/block}

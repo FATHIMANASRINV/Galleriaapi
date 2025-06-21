@@ -1,0 +1,294 @@
+{extends file="layout/base.tpl"}
+{block name="header"}
+<style type="text/css">
+   .pagination li.pagination_next a.current {
+    opacity: 0.85;
+    background: #006be1;
+}
+.page-link {
+    color: #101010;
+    background-color: var(--custom-white);
+    border: 1px solid var(--default-border);
+}
+.page-link:hover {
+    color: black;
+    background-color: #006be1;
+    border-color: var(--default-border);
+}
+.page-link .current{
+    color: #101010;
+    background-color: black;
+}
+</style>
+{/block}
+{block name="body"} 
+<div class="row">
+	<div class="col-xl-3 col-lg-4 col-md-12 mb-3 mb-md-0">
+		<div class="card">
+          {form_open('','id="add-form"')}
+
+          <div class="card-header border-bottom py-3 mb-0 fw-bold text-uppercase">Category</div>
+          <div class="card-body pb-0">
+           {foreach $category as $c}
+           {if count($c.sub_categories)}
+           <div class="form-group">
+            <label class="form-label">{$c.category_name}</label>
+            <select class="form-control" data-trigger name="choices-single-default" id="choices-single-default1">
+                {foreach $c.sub_categories as $sub}
+                <option value="">--Select--</option>
+                <option value="{$sub.id}">{$sub.category_name}</option>
+                {/foreach}
+            </select>
+
+        </div>
+        {/if}
+        <div class="form-group">
+            <div class="form-check">
+                <input class="form-check-input category" type="checkbox" name="category" value="{$c.id}" id="flexCheckDefault category{$c.id}"></span>
+                <label class="form-check-label container{$c.id}" for="{$c.id}">
+                 {$c.category_name}
+             </label>
+         </div>
+     </div>
+     {/foreach}
+ </div>
+ <div class="card-header border-bottom py-3 mb-0 fw-bold text-uppercase">Color</div>
+ <div class="card-body">
+
+
+
+    <div class="form-group mb-3">
+      {foreach $color_details as $v}
+      <div class="form-check">
+        <input class="form-check-inpu color" type="checkbox" name="color" value="{$v.id}" id="flexCheckDefault color{$v.id}"><span class="checkmark border" style="background-color: {$v.color_code}"></span>
+        <label class="form-check-label container{$v.id}" for="color{$v.id}">
+         {$v.name}
+     </label>
+ </div>
+ {/foreach}
+</div>
+<div class="card-header border-bottom py-3 mb-0 fw-bold text-uppercase">Size</div>
+<div class="form-group">
+   <!-- <label class="form-label">Size</label> -->
+   <select class="form-control dimension" data-trigger name="choices-single-default" id="dimension" name="dimension[]">
+    <option value="">Select a Dimension</option>
+    {foreach from=$dimensions_details item=s key=v}
+
+    <option id="size{$v}"  name="size" value="{$s}"></option>
+    {/foreach}
+</select>
+</div>
+</div>
+<div class="py-2 px-3">
+
+  <button class="btn btn-primary-gradient mt-2 mb-2 pb-2" type="submit" name="filter" id="filter" value="filter">Filter</button>
+</div>
+{form_close()}
+</div>
+<input type="hidden" class="category_id" id="category_id" name="category_id" value="{$category_id}">
+</div>
+<div class="col-xl-9 col-lg-8 col-md-12 postList">
+</div>
+<div class="scroll-load1" lastID="" id="scroll-load1">
+</div>
+<div class="new_page" newPage="1"></div>
+{/block}
+{block name="footer"}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twbs-pagination/1.4.2/jquery.twbsPagination.min.js"></script>
+
+<script type="text/javascript">   
+  $(document).ready(function(){ 
+     var category_id = $('#category_id').val();
+     var data ={
+        category_id: category_id,
+        limit:9
+    };
+
+    $.ajax({
+        type: 'POST',
+        url: "{base_url('user/inventory/more_datas')}", 
+        data: data,
+        dataType: 'json'
+    })
+    .done(function(html) {
+        if(html.postNum > 0){
+            endID = html.last_product_id;  
+            $(".scroll-load1").attr("lastID", endID);
+            $(".scroll-load12").attr("data-lastID", endID);
+            $("#load1123").val(endID);
+            $('.postList').append(html.post);
+        }else{
+
+            $('.loader').remove();
+            $('.postList').html('<h4 class="mt-3">No Products Found..........</h4>');
+        }
+
+
+    });
+});
+
+  $(document).on("submit", "#add-form", function(event){
+    event.preventDefault();
+    var endID='';
+    var color = [];
+    var category = [];
+    var dimension = [];
+    var lastID = 0;
+    var limit=9;
+    var sort='A-Z';
+    var length=$('.pro-img-box').length;
+    $.each($("input:checkbox[name='color']:checked"), function () {
+        color.push($(this).val());
+    });
+    $.each($("input:checkbox[name='category']:checked"), function () {
+
+        category.push($(this).val());
+    });
+    $("select[id^='dimension']").children('option:selected').each(function(){
+        if($(this).val()!=''){
+            dimension.push($(this).val());
+        }
+    });
+    var data =
+    {
+        limit: limit,
+        length:length,
+        sort: sort,
+        category_id: '{$filter_details["category_id"]}',
+        lastID: lastID,
+        color: color,
+        category: category,
+        dimension: dimension,
+        start_limit:0,
+
+    } 
+    $.ajax({
+        type:'POST',
+        url:"{base_url('user/inventory/more_datas')}",
+        data: data,
+        dataType:'json',
+        beforeSend: function( xhr ) {
+         $('.postList').html('<div id="gif" style="display: block; margin: 0 auto; visibility: visible;" class="loader"></div>');
+
+     }
+ })
+    .done(function( html ) {  
+        if(html.postNum > 0){
+            endID = html.last_product_id;  
+            $(".scroll-load1").attr("lastID", endID);
+            $('.postList').html(html.post);
+            $(".new_page").attr("newPage", 1);
+            $('#filter').show();
+            $('#gif').hide();
+
+        }else{
+
+            $('#filter').show();
+            $('.postList').html('<button class="btn btn-solid w-auto">No More Products</button>');
+        }
+
+    });
+
+});
+//   $(document).ready(function () {
+//     var endID='';
+//     var page = 1;
+//     var triggerScrollLoader = true;
+//     var isLoading = false;
+//     var lastID = $('.scroll-load12').attr('lastID'); 
+//     var color = [];
+//     var category = [];
+//     var dimension = [];
+//     if( lastID != 0){ 
+
+//         $(window).scroll(function (){
+//             if ($(window).scrollTop() >  $(document).height() - $(window).height() - 9500 && (lastID != 0)) {
+//                 // var status=$('.sort').attr('data-status');
+//                 var new_page= $('.new_page').attr('newPage'); 
+//                 // if(status){
+//                 triggerScrollLoader=true;
+//                 // }
+
+//                 if (isLoading == false) {
+//                     if(triggerScrollLoader){
+
+//                         isLoading = true;
+
+//                         console.log(page);
+//                         console.log(isLoading);
+//                         $('.loader').show();
+//                         sendData(page,new_page);
+//                         page++;
+
+//                     }
+//                 }
+//             }
+//         });
+//         function sendData(page,new_page) {
+//             var start_limit=0;
+//             var newpage1=parseInt(new_page)+1;
+//             var lastID= $('.scroll-load1').attr('lastID');
+//             var limit=9;
+//             var length=$('.pro-img-box').length;
+//             var start_limit=new_page*limit;
+//             $.each($("input:checkbox[name='color']:checked"), function () {
+//                 color.push($(this).val());
+//             });
+//             $.each($("input:checkbox[name='category']:checked"), function () {
+
+//                 category.push($(this).val());
+//             });
+//             $("select[id^='dimension']").children('option:selected').each(function(){
+//                 if($(this).val()!=''){
+//                     dimension.push($(this).val());
+//                 }
+//             });
+//             var data =
+//             { 
+//                 limit: limit,
+//                 category: category,
+//                 length:length,
+//                 lastID: lastID,
+//                 color: color,
+//                 dimension: dimension,
+//                 start_limit:start_limit,
+
+//             }  
+//             $.ajax(
+//             {
+//                 type: "POST",
+//                 url:"{base_url('user/inventory/more_datas')}",
+//                 data: data,
+//                 dataType: "json",
+//                 async: "true",
+//                 cache: "false",
+//                 success: function (html) {
+//                     if(html.postNum >0){
+//                         endID = html.last_product_id;  
+//                         $(".scroll-load1").attr("lastID", endID);
+//                         $(".new_page").attr("newPage", newpage1);
+//                         $('.loader').remove();
+//                         $(".postList").append(html.post);
+//                     }
+//                     else{
+//                         triggerScrollLoader=false;
+//                         $('.loader').remove();
+//                     }
+//                     setTimeout((function() {
+//                         triggerScrollLoader=false;
+//                         isLoading = false;
+//                     }), 1900);
+//                 },
+
+//                 Error: function (x, e) {
+//                     alert("Some error");
+//                 }
+//             });
+//         }
+//     }
+// });
+
+
+
+</script> 
+{/block}

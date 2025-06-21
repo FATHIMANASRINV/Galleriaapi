@@ -1,0 +1,62 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Cron_jobs extends Base_Controller 
+{
+
+    function __construct()
+    {
+        parent::__construct();
+
+    }
+
+
+    public function users_registration()
+    {
+        $date=date('Y-m-d');
+        $status = 0;
+        $cron_id = $this->Cron_jobs_model->insertCronHistory('users_reg');
+        $this->Cron_jobs_model->begin();
+        $this->load->model('Truncate_model'); 
+        $this->Truncate_model->truncateAll();
+        $status=$this->Cron_jobs_model->insertUsers();
+
+        if ($status) {
+            $this->Cron_jobs_model->commit();
+            $this->Cron_jobs_model->updateCronHistory($cron_id, "finished");
+            echo "finished";
+        } else {
+            $this->Cron_jobs_model->rollback();
+            $this->Cron_jobs_model->updateCronHistory($cron_id, "failed");
+            echo "failed";
+        }
+    }
+
+    function daily_bonus()
+    { 
+
+        $cron_id = $this->Cron_jobs_model->insertCronHistory('daily_coin');
+        $status = 0;
+        $day_name = date('D');
+
+        $date = date('Y-m-d');
+        $this->Cron_jobs_model->begin(); 
+        // if(!$this->Cron_jobs_model->isCronAlreadyRun($date,'daily_coin'))
+        // {
+            $user_details = $this->Cron_jobs_model->getRoiUsers();
+            // print_r($user_details);die();
+            $status = $this->Cron_jobs_model->runDailyBonus($user_details);
+        // }
+        
+    
+        if ($status) {
+            $this->Cron_jobs_model->commit();
+            $this->Cron_jobs_model->updateCronHistory($cron_id, "finished");
+            echo "finished";
+        } else {
+            $this->Cron_jobs_model->rollback();
+            $this->Cron_jobs_model->updateCronHistory($cron_id, "failed");
+            echo "failed";
+        }
+
+    }
+}
