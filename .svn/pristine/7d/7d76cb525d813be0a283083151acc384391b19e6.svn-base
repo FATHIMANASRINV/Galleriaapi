@@ -1,2 +1,0 @@
-	.binary-node-single-item.border-none {border: 0;}
-	.binary-node-single-item.border-none .images_wrapper a img {border: solid 3px #000; border-top-color: rgb(0, 0, 0); border-right-color: rgb(0, 0, 0); border-bottom-color: rgb(0, 0, 0); border-left-color: rgb(0, 0, 0); padding: 2px; background-color: #fff;} 
