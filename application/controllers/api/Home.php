@@ -84,7 +84,7 @@ class Home extends Api_Controller {
 						'success' => FALSE,
 						'msg' => lang('Check_the_fields'),
 					];
-					$response['errors'] = $this->form_validation->error_array();
+					$response['error_msg'] = $this->form_validation->error_array();
 					$this->output
 					->set_status_header(200)
 					->set_content_type('application/json', 'utf-8')
@@ -101,9 +101,12 @@ class Home extends Api_Controller {
 	}
 	private function validate_signup() {
 		$len_mob = value_by_key("phone_number_length");
-		$this->form_validation->set_rules('sponsor_name', lang('sponsor_name'), 'required|is_exist[user_info.user_name]');
-		$this->form_validation->set_rules('wallet_address', 'Wallet Address', 'required|is_unique[user_info.wallet_address]');
-		$this->form_validation->set_rules('transaction_id','Transaction Id','required|is_unique[user_info.transaction_id]'); 
+		$this->form_validation->set_rules('sponsor_name','Sponsor Name', 'required|is_exist[user_info.user_name]');
+		$this->form_validation->set_rules('email', 'Email', 'required|is_unique[user_info.email]');
+		$this->form_validation->set_rules('first_name','First Name','required'); 
+		$this->form_validation->set_rules('last_name','Last Name','required'); 
+		$this->form_validation->set_rules('password','Password','required'); 
+		$this->form_validation->set_rules('cpassword','Confirm password','required|matches[password]'); 
 		$result =  $this->form_validation->run();
 		return $result;
 	}
